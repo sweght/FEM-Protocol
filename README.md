@@ -1,4 +1,4 @@
-# Federated Embodied Mesh (FEM) & Federated Embodiment Protocol (FEP)
+# Federated Embodiment Protocol (FEP) & Federated Embodied Mesh (FEM)
 
 **FEP** is the wire-level protocol. **FEM** is the reference framework that implements it.
 

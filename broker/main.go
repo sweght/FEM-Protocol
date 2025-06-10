@@ -17,6 +17,8 @@ import (
 	"os"
 	"sync"
 	"time"
+
+	"github.com/fep-fem/protocol"
 )
 
 // Broker represents the FEM broker server
@@ -86,30 +88,30 @@ func (b *Broker) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	defer r.Body.Close()
 
 	// Parse envelope
-	var envelope Envelope
-	if err := json.Unmarshal(body, &envelope); err != nil {
-		http.Error(w, "Invalid JSON", http.StatusBadRequest)
+	envelope, err := protocol.ParseEnvelope(body)
+	if err != nil {
+		http.Error(w, fmt.Sprintf("Invalid envelope: %v", err), http.StatusBadRequest)
 		return
 	}
 
 	// Log the received envelope
-	log.Printf("Received %s envelope from %s", envelope.Type, envelope.Headers.Agent)
+	log.Printf("Received %s envelope from %s", envelope.Type, envelope.Agent)
 
 	// Process based on envelope type
 	switch envelope.Type {
-	case RegisterAgent:
+	case protocol.EnvelopeRegisterAgent:
 		b.handleRegisterAgent(w, &envelope)
-	case RegisterBroker:
+	case protocol.EnvelopeRegisterBroker:
 		b.handleRegisterBroker(w, &envelope)
-	case EmitEvent:
+	case protocol.EnvelopeEmitEvent:
 		b.handleEmitEvent(w, &envelope)
-	case RenderInstruction:
+	case protocol.EnvelopeRenderInstruction:
 		b.handleRenderInstruction(w, &envelope)
-	case ToolCall:
+	case protocol.EnvelopeToolCall:
 		b.handleToolCall(w, &envelope)
-	case ToolResult:
+	case protocol.EnvelopeToolResult:
 		b.handleToolResult(w, &envelope)
-	case Revoke:
+	case protocol.EnvelopeRevoke:
 		b.handleRevoke(w, &envelope)
 	default:
 		http.Error(w, "Unknown envelope type", http.StatusBadRequest)
@@ -118,7 +120,7 @@ func (b *Broker) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 }
 
 // handleRegisterAgent processes agent registration
-func (b *Broker) handleRegisterAgent(w http.ResponseWriter, env *Envelope) {
+func (b *Broker) handleRegisterAgent(w http.ResponseWriter, env *protocol.Envelope) {
 	var body struct {
 		Capabilities []string `json:"capabilities"`
 		Endpoint     string   `json:"endpoint"`
@@ -150,7 +152,7 @@ func (b *Broker) handleRegisterAgent(w http.ResponseWriter, env *Envelope) {
 }
 
 // handleRegisterBroker processes broker registration
-func (b *Broker) handleRegisterBroker(w http.ResponseWriter, env *Envelope) {
+func (b *Broker) handleRegisterBroker(w http.ResponseWriter, env *protocol.Envelope) {
 	var body struct {
 		Endpoint   string                 `json:"endpoint"`
 		Embodiment map[string]interface{} `json:"embodiment,omitempty"`
@@ -173,7 +175,7 @@ func (b *Broker) handleRegisterBroker(w http.ResponseWriter, env *Envelope) {
 }
 
 // handleEmitEvent processes event emissions
-func (b *Broker) handleEmitEvent(w http.ResponseWriter, env *Envelope) {
+func (b *Broker) handleEmitEvent(w http.ResponseWriter, env *protocol.Envelope) {
 	var body struct {
 		EventType string                 `json:"eventType"`
 		Data      map[string]interface{} `json:"data"`
@@ -197,7 +199,7 @@ func (b *Broker) handleEmitEvent(w http.ResponseWriter, env *Envelope) {
 }
 
 // handleRenderInstruction processes render instructions
-func (b *Broker) handleRenderInstruction(w http.ResponseWriter, env *Envelope) {
+func (b *Broker) handleRenderInstruction(w http.ResponseWriter, env *protocol.Envelope) {
 	var body struct {
 		Instruction string                 `json:"instruction"`
 		Context     map[string]interface{} `json:"context,omitempty"`
@@ -219,7 +221,7 @@ func (b *Broker) handleRenderInstruction(w http.ResponseWriter, env *Envelope) {
 }
 
 // handleToolCall processes tool calls
-func (b *Broker) handleToolCall(w http.ResponseWriter, env *Envelope) {
+func (b *Broker) handleToolCall(w http.ResponseWriter, env *protocol.Envelope) {
 	var body struct {
 		Tool       string                 `json:"tool"`
 		Parameters map[string]interface{} `json:"parameters"`
@@ -243,7 +245,7 @@ func (b *Broker) handleToolCall(w http.ResponseWriter, env *Envelope) {
 }
 
 // handleToolResult processes tool results
-func (b *Broker) handleToolResult(w http.ResponseWriter, env *Envelope) {
+func (b *Broker) handleToolResult(w http.ResponseWriter, env *protocol.Envelope) {
 	var body struct {
 		Tool   string      `json:"tool"`
 		Result interface{} `json:"result"`
@@ -267,7 +269,7 @@ func (b *Broker) handleToolResult(w http.ResponseWriter, env *Envelope) {
 }
 
 // handleRevoke processes revocation
-func (b *Broker) handleRevoke(w http.ResponseWriter, env *Envelope) {
+func (b *Broker) handleRevoke(w http.ResponseWriter, env *protocol.Envelope) {
 	var body struct {
 		Target string `json:"target"`
 		Reason string `json:"reason"`

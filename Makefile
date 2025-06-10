@@ -21,7 +21,7 @@ build: broker router coder
 broker:
 	@echo "Building fem-broker..."
 	@mkdir -p $(BIN_DIR)
-	cd broker && go build -o ../$(BIN_DIR)/fem-broker ./cmd/fem-broker
+	cd broker && go build -o ../$(BIN_DIR)/fem-broker .
 
 # Build router
 router:
