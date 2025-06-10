@@ -1,0 +1,45 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://fep-fem.org/schemas/envelope.schema.json",
+  "title": "FEP Envelope",
+  "description": "Base schema for all FEP protocol envelopes",
+  "type": "object",
+  "required": ["type", "agent", "ts", "nonce", "body"],
+  "properties": {
+    "type": {
+      "type": "string",
+      "enum": [
+        "registerAgent",
+        "registerBroker", 
+        "emitEvent",
+        "renderInstruction",
+        "toolCall",
+        "toolResult",
+        "revoke"
+      ],
+      "description": "The type of envelope"
+    },
+    "agent": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9-._]*[a-z0-9]$",
+      "description": "UTF-8 agent identifier"
+    },
+    "ts": {
+      "type": "integer",
+      "description": "Unix timestamp in milliseconds"
+    },
+    "nonce": {
+      "type": "string",
+      "description": "Unique nonce for replay protection"
+    },
+    "sig": {
+      "type": "string",
+      "description": "Base64 encoded Ed25519 signature"
+    },
+    "body": {
+      "type": "object",
+      "description": "Envelope-specific body content"
+    }
+  },
+  "additionalProperties": false
+}

@@ -1,0 +1,31 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://fem.dev/schemas/common-headers.json",
+  "title": "FEP Common Headers",
+  "description": "Common headers required for all FEP envelopes",
+  "type": "object",
+  "properties": {
+    "agent": {
+      "type": "string",
+      "description": "Agent identifier",
+      "minLength": 1
+    },
+    "ts": {
+      "type": "integer",
+      "description": "Unix timestamp in milliseconds",
+      "minimum": 0
+    },
+    "nonce": {
+      "type": "string",
+      "description": "18-byte random nonce",
+      "pattern": "^[A-Za-z0-9+/=]{24}$"
+    },
+    "sig": {
+      "type": "string",
+      "description": "Base64-encoded Ed25519 signature of the body",
+      "pattern": "^[A-Za-z0-9+/=]+$"
+    }
+  },
+  "required": ["agent", "ts", "nonce", "sig"],
+  "additionalProperties": false
+}

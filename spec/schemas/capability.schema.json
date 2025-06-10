@@ -1,0 +1,43 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://fep-fem.org/schemas/capability.schema.json",
+  "title": "FEP Capability Token",
+  "description": "Schema for FEP capability JWT tokens",
+  "type": "object",
+  "required": ["scope", "permissions", "iss", "sub", "iat", "exp"],
+  "properties": {
+    "scope": {
+      "type": "string",
+      "pattern": "^scope:[a-z]+$",
+      "description": "Capability scope (e.g., scope:local, scope:trusted)"
+    },
+    "permissions": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "List of granted permissions"
+    },
+    "iss": {
+      "type": "string",
+      "description": "Issuer identifier"
+    },
+    "sub": {
+      "type": "string", 
+      "description": "Subject identifier"
+    },
+    "iat": {
+      "type": "integer",
+      "description": "Issued at timestamp"
+    },
+    "exp": {
+      "type": "integer",
+      "description": "Expiration timestamp"
+    },
+    "jti": {
+      "type": "string",
+      "description": "JWT ID for revocation"
+    }
+  },
+  "additionalProperties": false
+}

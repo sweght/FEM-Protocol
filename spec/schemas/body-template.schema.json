@@ -1,0 +1,89 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://fep-fem.org/schemas/body-template.schema.json",
+  "title": "FEP Body Template",
+  "description": "Schema for FEP agent body template definitions",
+  "type": "object",
+  "required": ["name", "version", "securityTier", "tools", "runtime"],
+  "properties": {
+    "name": {
+      "type": "string",
+      "pattern": "^[a-z0-9-]+$",
+      "description": "Body template name"
+    },
+    "version": {
+      "type": "string",
+      "pattern": "^\\d+\\.\\d+\\.\\d+$",
+      "description": "Semantic version"
+    },
+    "securityTier": {
+      "type": "string",
+      "enum": ["local", "trusted", "public"],
+      "description": "Required security tier"
+    },
+    "tools": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["name", "description"],
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Tool function name"
+          },
+          "description": {
+            "type": "string",
+            "description": "Tool description"
+          },
+          "parameters": {
+            "type": "object",
+            "description": "JSON Schema for tool parameters"
+          }
+        }
+      },
+      "description": "Available tools in this body"
+    },
+    "runtime": {
+      "type": "object",
+      "required": ["type"],
+      "properties": {
+        "type": {
+          "type": "string",
+          "enum": ["docker", "native", "wasm"],
+          "description": "Runtime type"
+        },
+        "image": {
+          "type": "string",
+          "description": "Docker image (if type is docker)"
+        },
+        "command": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Command to execute"
+        }
+      },
+      "description": "Runtime configuration"
+    },
+    "quotas": {
+      "type": "object",
+      "properties": {
+        "cpuMs": {
+          "type": "integer",
+          "description": "CPU quota in milliseconds"
+        },
+        "memoryMb": {
+          "type": "integer", 
+          "description": "Memory quota in MB"
+        },
+        "diskMb": {
+          "type": "integer",
+          "description": "Disk quota in MB"
+        }
+      },
+      "description": "Resource quotas"
+    }
+  },
+  "additionalProperties": false
+}

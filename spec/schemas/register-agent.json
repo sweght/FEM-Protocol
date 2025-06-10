@@ -1,0 +1,36 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://fem.dev/schemas/register-agent.json",
+  "title": "Register Agent Envelope",
+  "description": "Envelope for agent registration",
+  "type": "object",
+  "properties": {
+    "type": {
+      "const": "registerAgent"
+    },
+    "headers": {
+      "$ref": "common-headers.json"
+    },
+    "body": {
+      "type": "object",
+      "properties": {
+        "capabilities": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "List of agent capabilities"
+        },
+        "endpoint": {
+          "type": "string",
+          "format": "uri",
+          "description": "Agent's endpoint URL"
+        }
+      },
+      "required": ["capabilities", "endpoint"],
+      "additionalProperties": false
+    }
+  },
+  "required": ["type", "headers", "body"],
+  "additionalProperties": false
+}
