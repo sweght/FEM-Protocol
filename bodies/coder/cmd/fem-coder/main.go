@@ -1,128 +1,203 @@
 package main
 
 import (
-	"bufio"
+	"bytes"
+	"crypto/ed25519"
+	"crypto/tls"
 	"encoding/json"
 	"flag"
+	"fmt"
 	"log"
-	"os"
+	"net/http"
+	"os/exec"
+	"time"
+
+	"github.com/fep-fem/protocol"
 )
 
-// FEPEnvelope represents a basic FEP envelope structure
-type FEPEnvelope struct {
-	Type    string          `json:"type,omitempty"`
-	Agent   string          `json:"agent,omitempty"`
-	TS      int64           `json:"ts,omitempty"`
-	Nonce   string          `json:"nonce,omitempty"`
-	Sig     string          `json:"sig,omitempty"`
-	Payload json.RawMessage `json:"payload,omitempty"`
-}
-
-// ToolCallPayload represents the payload for a toolCall envelope
-type ToolCallPayload struct {
-	Tool       string                 `json:"tool"`
-	Parameters map[string]interface{} `json:"parameters"`
+type Agent struct {
+	ID       string
+	BrokerURL string
+	PubKey   ed25519.PublicKey
+	PrivKey  ed25519.PrivateKey
+	client   *http.Client
 }
 
 func main() {
-	// Parse command line flags (for consistency, though coder reads from stdin)
-	listenAddr := flag.String("listen", ":4433", "Address to listen on (unused for coder)")
+	// Parse command line flags
+	brokerURL := flag.String("broker", "https://localhost:4433", "Broker URL to connect to")
+	agentID := flag.String("agent", "fem-coder-001", "Agent identifier")
 	flag.Parse()
 
-	log.Printf("fem-coder started (listen flag: %s, but reading from stdin)", *listenAddr)
+	log.Printf("fem-coder starting - Agent ID: %s, Broker: %s", *agentID, *brokerURL)
 
-	// Create scanner for stdin
-	scanner := bufio.NewScanner(os.Stdin)
-	writer := bufio.NewWriter(os.Stdout)
-
-	// Process each line from stdin
-	for scanner.Scan() {
-		line := scanner.Bytes()
-
-		// Try to parse as JSON envelope
-		var envelope FEPEnvelope
-		if err := json.Unmarshal(line, &envelope); err != nil {
-			log.Printf("Invalid JSON received: %v", err)
-			continue
-		}
-
-		// Process based on envelope type
-		if envelope.Type == "toolCall" {
-			handleToolCall(&envelope, writer)
-		} else {
-			// Echo other envelope types back
-			if _, err := writer.Write(line); err != nil {
-				log.Printf("Failed to write response: %v", err)
-				continue
-			}
-			if err := writer.WriteByte('\n'); err != nil {
-				log.Printf("Failed to write newline: %v", err)
-				continue
-			}
-			if err := writer.Flush(); err != nil {
-				log.Printf("Failed to flush: %v", err)
-				continue
-			}
-			log.Printf("Echoed envelope type: %s", envelope.Type)
-		}
+	// Generate key pair for this agent
+	pubKey, privKey, err := protocol.GenerateKeyPair()
+	if err != nil {
+		log.Fatalf("Failed to generate key pair: %v", err)
 	}
 
-	if err := scanner.Err(); err != nil {
-		log.Printf("Scanner error: %v", err)
+	// Create agent
+	agent := &Agent{
+		ID:        *agentID,
+		BrokerURL: *brokerURL,
+		PubKey:    pubKey,
+		PrivKey:   privKey,
+		client: &http.Client{
+			Transport: &http.Transport{
+				TLSClientConfig: &tls.Config{
+					InsecureSkipVerify: true, // For demo with self-signed certs
+				},
+			},
+			Timeout: 10 * time.Second,
+		},
 	}
+
+	// Register with broker
+	if err := agent.registerWithBroker(); err != nil {
+		log.Fatalf("Failed to register with broker: %v", err)
+	}
+
+	log.Println("Successfully registered with broker. Waiting for tool calls...")
+
+	// Keep the agent running (in a real implementation, this would listen for incoming messages)
+	select {}
 }
 
-func handleToolCall(envelope *FEPEnvelope, writer *bufio.Writer) {
-	// Parse the toolCall payload
-	var payload ToolCallPayload
-	if err := json.Unmarshal(envelope.Payload, &payload); err != nil {
-		log.Printf("Failed to parse toolCall payload: %v", err)
-		return
+func (a *Agent) registerWithBroker() error {
+	// Create registration envelope
+	envelope := &protocol.RegisterAgentEnvelope{
+		BaseEnvelope: protocol.BaseEnvelope{
+			Type: protocol.EnvelopeRegisterAgent,
+			CommonHeaders: protocol.CommonHeaders{
+				Agent: a.ID,
+				TS:    time.Now().UnixMilli(),
+				Nonce: fmt.Sprintf("%d", time.Now().UnixNano()),
+			},
+		},
+		Body: protocol.RegisterAgentBody{
+			Capabilities: []string{"code.execute", "shell.run", "file.read", "file.write"},
+			PubKey:       protocol.EncodePublicKey(a.PubKey),
+		},
 	}
 
-	log.Printf("Processing toolCall for tool: %s", payload.Tool)
-
-	// Create a simple toolResult response
-	resultEnvelope := FEPEnvelope{
-		Type:  "toolResult",
-		Agent: "fem-coder",
-		TS:    envelope.TS,
-		Nonce: envelope.Nonce,
-		Sig:   "placeholder-signature",
+	// Sign the envelope
+	if err := envelope.Sign(a.PrivKey); err != nil {
+		return fmt.Errorf("failed to sign envelope: %w", err)
 	}
 
-	// Create result payload
-	resultPayload := map[string]interface{}{
-		"tool":   payload.Tool,
-		"result": map[string]interface{}{"status": "processed", "message": "Tool call processed by fem-coder"},
-	}
-
-	payloadBytes, err := json.Marshal(resultPayload)
+	// Marshal to JSON
+	data, err := json.Marshal(envelope)
 	if err != nil {
-		log.Printf("Failed to marshal result payload: %v", err)
-		return
+		return fmt.Errorf("failed to marshal envelope: %w", err)
 	}
-	resultEnvelope.Payload = payloadBytes
 
-	// Write the result
-	resultBytes, err := json.Marshal(resultEnvelope)
+	// Send to broker
+	resp, err := a.client.Post(a.BrokerURL+"/fep", "application/json", bytes.NewReader(data))
 	if err != nil {
-		log.Printf("Failed to marshal result envelope: %v", err)
-		return
+		return fmt.Errorf("failed to send registration: %w", err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		return fmt.Errorf("broker returned status %d", resp.StatusCode)
 	}
 
-	if _, err := writer.Write(resultBytes); err != nil {
-		log.Printf("Failed to write result: %v", err)
-		return
-	}
-	if err := writer.WriteByte('\n'); err != nil {
-		log.Printf("Failed to write newline: %v", err)
-		return
-	}
-	if err := writer.Flush(); err != nil {
-		log.Printf("Failed to flush: %v", err)
-		return
-	}
+	log.Printf("Registration successful - Agent %s registered with broker", a.ID)
+	return nil
+}
 
-	log.Printf("Sent toolResult for tool: %s", payload.Tool)
+// executeCode handles code execution tool calls
+func (a *Agent) executeCode(command string, args []string) (string, error) {
+	log.Printf("Executing: %s %v", command, args)
+	
+	cmd := exec.Command(command, args...)
+	output, err := cmd.CombinedOutput()
+	
+	if err != nil {
+		return "", fmt.Errorf("execution failed: %w, output: %s", err, string(output))
+	}
+	
+	return string(output), nil
+}
+
+// handleToolCall processes incoming tool call requests
+func (a *Agent) handleToolCall(envelope *protocol.ToolCallEnvelope) (*protocol.ToolResultEnvelope, error) {
+	toolName := envelope.Body.Tool
+	params := envelope.Body.Parameters
+	
+	log.Printf("Handling tool call: %s", toolName)
+	
+	var result interface{}
+	var execError string
+	
+	switch toolName {
+	case "code.execute":
+		// Extract command and args from parameters
+		command, ok := params["command"].(string)
+		if !ok {
+			execError = "missing or invalid 'command' parameter"
+		} else {
+			argsSlice := []string{}
+			if args, exists := params["args"]; exists {
+				if argsList, ok := args.([]interface{}); ok {
+					for _, arg := range argsList {
+						if argStr, ok := arg.(string); ok {
+							argsSlice = append(argsSlice, argStr)
+						}
+					}
+				}
+			}
+			
+			output, err := a.executeCode(command, argsSlice)
+			if err != nil {
+				execError = err.Error()
+			} else {
+				result = map[string]interface{}{
+					"output": output,
+					"status": "success",
+				}
+			}
+		}
+		
+	case "shell.run":
+		// Simple shell execution
+		command, ok := params["command"].(string)
+		if !ok {
+			execError = "missing or invalid 'command' parameter"
+		} else {
+			output, err := a.executeCode("sh", []string{"-c", command})
+			if err != nil {
+				execError = err.Error()
+			} else {
+				result = map[string]interface{}{
+					"output": output,
+					"status": "success",
+				}
+			}
+		}
+		
+	default:
+		execError = fmt.Sprintf("unknown tool: %s", toolName)
+	}
+	
+	// Create result envelope
+	resultEnvelope := &protocol.ToolResultEnvelope{
+		BaseEnvelope: protocol.BaseEnvelope{
+			Type: protocol.EnvelopeToolResult,
+			CommonHeaders: protocol.CommonHeaders{
+				Agent: a.ID,
+				TS:    time.Now().UnixMilli(),
+				Nonce: fmt.Sprintf("%d", time.Now().UnixNano()),
+			},
+		},
+		Body: protocol.ToolResultBody{
+			RequestID: envelope.Nonce, // Use the original request nonce as ID
+			Success:   execError == "",
+			Result:    result,
+			Error:     execError,
+		},
+	}
+	
+	return resultEnvelope, nil
 }
