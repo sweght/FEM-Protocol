@@ -9,6 +9,7 @@ import (
 	"encoding/json"
 	"encoding/pem"
 	"flag"
+	"fmt"
 	"io"
 	"log"
 	"math/big"
@@ -100,19 +101,19 @@ func (b *Broker) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	// Process based on envelope type
 	switch envelope.Type {
 	case protocol.EnvelopeRegisterAgent:
-		b.handleRegisterAgent(w, &envelope)
+		b.handleRegisterAgent(w, envelope)
 	case protocol.EnvelopeRegisterBroker:
-		b.handleRegisterBroker(w, &envelope)
+		b.handleRegisterBroker(w, envelope)
 	case protocol.EnvelopeEmitEvent:
-		b.handleEmitEvent(w, &envelope)
+		b.handleEmitEvent(w, envelope)
 	case protocol.EnvelopeRenderInstruction:
-		b.handleRenderInstruction(w, &envelope)
+		b.handleRenderInstruction(w, envelope)
 	case protocol.EnvelopeToolCall:
-		b.handleToolCall(w, &envelope)
+		b.handleToolCall(w, envelope)
 	case protocol.EnvelopeToolResult:
-		b.handleToolResult(w, &envelope)
+		b.handleToolResult(w, envelope)
 	case protocol.EnvelopeRevoke:
-		b.handleRevoke(w, &envelope)
+		b.handleRevoke(w, envelope)
 	default:
 		http.Error(w, "Unknown envelope type", http.StatusBadRequest)
 		return
@@ -120,31 +121,31 @@ func (b *Broker) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 }
 
 // handleRegisterAgent processes agent registration
-func (b *Broker) handleRegisterAgent(w http.ResponseWriter, env *protocol.Envelope) {
+func (b *Broker) handleRegisterAgent(w http.ResponseWriter, env *protocol.GenericEnvelope) {
 	var body struct {
 		Capabilities []string `json:"capabilities"`
 		Endpoint     string   `json:"endpoint"`
 	}
 
-	if err := json.Unmarshal(env.Body, &body); err != nil {
+	if err := env.GetBodyAs(&body); err != nil {
 		http.Error(w, "Invalid body", http.StatusBadRequest)
 		return
 	}
 
 	b.mu.Lock()
-	b.agents[env.Headers.Agent] = &Agent{
-		ID:           env.Headers.Agent,
+	b.agents[env.Agent] = &Agent{
+		ID:           env.Agent,
 		Capabilities: body.Capabilities,
 		Endpoint:     body.Endpoint,
 		RegisteredAt: time.Now(),
 	}
 	b.mu.Unlock()
 
-	log.Printf("Registered agent %s with capabilities %v", env.Headers.Agent, body.Capabilities)
+	log.Printf("Registered agent %s with capabilities %v", env.Agent, body.Capabilities)
 
 	response := map[string]interface{}{
 		"status": "registered",
-		"agent":  env.Headers.Agent,
+		"agent":  env.Agent,
 	}
 
 	w.Header().Set("Content-Type", "application/json")
@@ -152,7 +153,7 @@ func (b *Broker) handleRegisterAgent(w http.ResponseWriter, env *protocol.Envelo
 }
 
 // handleRegisterBroker processes broker registration
-func (b *Broker) handleRegisterBroker(w http.ResponseWriter, env *protocol.Envelope) {
+func (b *Broker) handleRegisterBroker(w http.ResponseWriter, env *protocol.GenericEnvelope) {
 	var body struct {
 		Endpoint   string                 `json:"endpoint"`
 		Embodiment map[string]interface{} `json:"embodiment,omitempty"`
@@ -163,11 +164,11 @@ func (b *Broker) handleRegisterBroker(w http.ResponseWriter, env *protocol.Envel
 		return
 	}
 
-	log.Printf("Broker registration from %s at %s", env.Headers.Agent, body.Endpoint)
+	log.Printf("Broker registration from %s at %s", env.Agent, body.Endpoint)
 
 	response := map[string]interface{}{
 		"status": "registered",
-		"broker": env.Headers.Agent,
+		"broker": env.Agent,
 	}
 
 	w.Header().Set("Content-Type", "application/json")
@@ -175,7 +176,7 @@ func (b *Broker) handleRegisterBroker(w http.ResponseWriter, env *protocol.Envel
 }
 
 // handleEmitEvent processes event emissions
-func (b *Broker) handleEmitEvent(w http.ResponseWriter, env *protocol.Envelope) {
+func (b *Broker) handleEmitEvent(w http.ResponseWriter, env *protocol.GenericEnvelope) {
 	var body struct {
 		EventType string                 `json:"eventType"`
 		Data      map[string]interface{} `json:"data"`
@@ -186,7 +187,7 @@ func (b *Broker) handleEmitEvent(w http.ResponseWriter, env *protocol.Envelope) 
 		return
 	}
 
-	log.Printf("Event %s from %s: %v", body.EventType, env.Headers.Agent, body.Data)
+	log.Printf("Event %s from %s: %v", body.EventType, env.Agent, body.Data)
 
 	// In a real implementation, this would fan out to subscribers
 	response := map[string]interface{}{
@@ -199,7 +200,7 @@ func (b *Broker) handleEmitEvent(w http.ResponseWriter, env *protocol.Envelope) 
 }
 
 // handleRenderInstruction processes render instructions
-func (b *Broker) handleRenderInstruction(w http.ResponseWriter, env *protocol.Envelope) {
+func (b *Broker) handleRenderInstruction(w http.ResponseWriter, env *protocol.GenericEnvelope) {
 	var body struct {
 		Instruction string                 `json:"instruction"`
 		Context     map[string]interface{} `json:"context,omitempty"`
@@ -210,7 +211,7 @@ func (b *Broker) handleRenderInstruction(w http.ResponseWriter, env *protocol.En
 		return
 	}
 
-	log.Printf("Render instruction from %s: %s", env.Headers.Agent, body.Instruction)
+	log.Printf("Render instruction from %s: %s", env.Agent, body.Instruction)
 
 	response := map[string]interface{}{
 		"status": "rendered",
@@ -221,7 +222,7 @@ func (b *Broker) handleRenderInstruction(w http.ResponseWriter, env *protocol.En
 }
 
 // handleToolCall processes tool calls
-func (b *Broker) handleToolCall(w http.ResponseWriter, env *protocol.Envelope) {
+func (b *Broker) handleToolCall(w http.ResponseWriter, env *protocol.GenericEnvelope) {
 	var body struct {
 		Tool       string                 `json:"tool"`
 		Parameters map[string]interface{} `json:"parameters"`
@@ -232,7 +233,7 @@ func (b *Broker) handleToolCall(w http.ResponseWriter, env *protocol.Envelope) {
 		return
 	}
 
-	log.Printf("Tool call %s from %s", body.Tool, env.Headers.Agent)
+	log.Printf("Tool call %s from %s", body.Tool, env.Agent)
 
 	// In a real implementation, this would route to the appropriate tool handler
 	response := map[string]interface{}{
@@ -245,7 +246,7 @@ func (b *Broker) handleToolCall(w http.ResponseWriter, env *protocol.Envelope) {
 }
 
 // handleToolResult processes tool results
-func (b *Broker) handleToolResult(w http.ResponseWriter, env *protocol.Envelope) {
+func (b *Broker) handleToolResult(w http.ResponseWriter, env *protocol.GenericEnvelope) {
 	var body struct {
 		Tool   string      `json:"tool"`
 		Result interface{} `json:"result"`
@@ -257,7 +258,7 @@ func (b *Broker) handleToolResult(w http.ResponseWriter, env *protocol.Envelope)
 		return
 	}
 
-	log.Printf("Tool result for %s from %s", body.Tool, env.Headers.Agent)
+	log.Printf("Tool result for %s from %s", body.Tool, env.Agent)
 
 	response := map[string]interface{}{
 		"status": "received",
@@ -269,7 +270,7 @@ func (b *Broker) handleToolResult(w http.ResponseWriter, env *protocol.Envelope)
 }
 
 // handleRevoke processes revocation
-func (b *Broker) handleRevoke(w http.ResponseWriter, env *protocol.Envelope) {
+func (b *Broker) handleRevoke(w http.ResponseWriter, env *protocol.GenericEnvelope) {
 	var body struct {
 		Target string `json:"target"`
 		Reason string `json:"reason"`
