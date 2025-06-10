@@ -75,6 +75,13 @@ func NewBroker() *Broker {
 
 // ServeHTTP implements the http.Handler interface
 func (b *Broker) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	// Health check endpoint
+	if r.URL.Path == "/health" && r.Method == http.MethodGet {
+		w.WriteHeader(http.StatusOK)
+		w.Write([]byte("OK"))
+		return
+	}
+	
 	if r.Method != http.MethodPost {
 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 		return

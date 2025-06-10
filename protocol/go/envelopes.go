@@ -143,6 +143,57 @@ func (e *Envelope) Sign(privateKey ed25519.PrivateKey) error {
 	return nil
 }
 
+// Sign methods for specific envelope types
+func (e *RegisterAgentEnvelope) Sign(privateKey ed25519.PrivateKey) error {
+	// Remove existing signature
+	e.Sig = ""
+	
+	// Marshal the envelope without signature
+	data, err := json.Marshal(e)
+	if err != nil {
+		return err
+	}
+	
+	// Sign the data
+	signature := ed25519.Sign(privateKey, data)
+	e.Sig = base64.StdEncoding.EncodeToString(signature)
+	
+	return nil
+}
+
+func (e *RegisterBrokerEnvelope) Sign(privateKey ed25519.PrivateKey) error {
+	e.Sig = ""
+	data, err := json.Marshal(e)
+	if err != nil {
+		return err
+	}
+	signature := ed25519.Sign(privateKey, data)
+	e.Sig = base64.StdEncoding.EncodeToString(signature)
+	return nil
+}
+
+func (e *ToolCallEnvelope) Sign(privateKey ed25519.PrivateKey) error {
+	e.Sig = ""
+	data, err := json.Marshal(e)
+	if err != nil {
+		return err
+	}
+	signature := ed25519.Sign(privateKey, data)
+	e.Sig = base64.StdEncoding.EncodeToString(signature)
+	return nil
+}
+
+func (e *ToolResultEnvelope) Sign(privateKey ed25519.PrivateKey) error {
+	e.Sig = ""
+	data, err := json.Marshal(e)
+	if err != nil {
+		return err
+	}
+	signature := ed25519.Sign(privateKey, data)
+	e.Sig = base64.StdEncoding.EncodeToString(signature)
+	return nil
+}
+
 // Verify verifies the envelope signature with the given public key
 func (e *Envelope) Verify(publicKey ed25519.PublicKey) error {
 	if e.Sig == "" {
