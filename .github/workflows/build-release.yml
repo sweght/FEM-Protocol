@@ -1,0 +1,203 @@
+name: Build and Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+  pull_request:
+    branches: [ main ]
+  push:
+    branches: [ main ]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Set up Go
+      uses: actions/setup-go@v5
+      with:
+        go-version: '1.21'
+    
+    - name: Run tests
+      run: |
+        cd protocol/go
+        go mod tidy
+        go test -v ./...
+        
+    - name: Test build all components
+      run: |
+        # Build broker
+        cd broker
+        go mod tidy
+        go build -v .
+        cd ..
+        
+        # Build router
+        cd router
+        go mod tidy
+        go build -v .
+        cd ..
+        
+        # Build coder
+        cd bodies/coder
+        go mod tidy
+        go build -v ./cmd/fem-coder
+        cd ../..
+
+  build:
+    needs: test
+    runs-on: ubuntu-latest
+    if: startsWith(github.ref, 'refs/tags/v')
+    strategy:
+      matrix:
+        goos: [linux, darwin, windows]
+        goarch: [amd64, arm64]
+        exclude:
+          - goos: windows
+            goarch: arm64
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Set up Go
+      uses: actions/setup-go@v5
+      with:
+        go-version: '1.21'
+    
+    - name: Get version
+      id: version
+      run: echo "VERSION=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
+    
+    - name: Build binaries
+      env:
+        GOOS: ${{ matrix.goos }}
+        GOARCH: ${{ matrix.goarch }}
+        CGO_ENABLED: 0
+      run: |
+        # Create release directory
+        mkdir -p release
+        
+        # Set binary suffix
+        SUFFIX=""
+        if [ "${{ matrix.goos }}" = "windows" ]; then
+          SUFFIX=".exe"
+        fi
+        
+        # Build broker
+        cd broker
+        go mod tidy
+        go build -ldflags="-s -w" -o ../release/fem-broker-${{ matrix.goos }}-${{ matrix.goarch }}${SUFFIX} .
+        cd ..
+        
+        # Build router  
+        cd router
+        go mod tidy
+        go build -ldflags="-s -w" -o ../release/fem-router-${{ matrix.goos }}-${{ matrix.goarch }}${SUFFIX} .
+        cd ..
+        
+        # Build coder
+        cd bodies/coder
+        go mod tidy
+        go build -ldflags="-s -w" -o ../../release/fem-coder-${{ matrix.goos }}-${{ matrix.goarch }}${SUFFIX} ./cmd/fem-coder
+        cd ../..
+    
+    - name: Create archive
+      run: |
+        cd release
+        if [ "${{ matrix.goos }}" = "windows" ]; then
+          zip -r fem-${{ steps.version.outputs.VERSION }}-${{ matrix.goos }}-${{ matrix.goarch }}.zip *
+        else
+          tar -czf fem-${{ steps.version.outputs.VERSION }}-${{ matrix.goos }}-${{ matrix.goarch }}.tar.gz *
+        fi
+        cd ..
+    
+    - name: Upload artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: fem-${{ matrix.goos }}-${{ matrix.goarch }}
+        path: release/fem-${{ steps.version.outputs.VERSION }}-${{ matrix.goos }}-${{ matrix.goarch }}.*
+
+  release:
+    needs: build
+    runs-on: ubuntu-latest
+    if: startsWith(github.ref, 'refs/tags/v')
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Get version
+      id: version
+      run: echo "VERSION=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
+    
+    - name: Download all artifacts
+      uses: actions/download-artifact@v4
+      with:
+        path: artifacts
+    
+    - name: Prepare release assets
+      run: |
+        mkdir -p release-assets
+        find artifacts -name "*.tar.gz" -o -name "*.zip" | xargs -I {} cp {} release-assets/
+        ls -la release-assets/
+    
+    - name: Generate release notes
+      run: |
+        cat > release-notes.md << 'EOF'
+        # FEP-FEM Release ${{ steps.version.outputs.VERSION }}
+        
+        ## What's Included
+        
+        This release contains pre-built binaries for the Federated Embodiment Protocol (FEP) and Federated Embodied Mesh (FEM) framework:
+        
+        - **fem-broker**: Message broker for agent coordination
+        - **fem-router**: Mesh networking router for federation  
+        - **fem-coder**: Sandboxed code execution agent
+        
+        ## Supported Platforms
+        
+        - Linux (amd64, arm64)
+        - macOS (amd64, arm64) 
+        - Windows (amd64)
+        
+        ## Quick Start
+        
+        1. Download the appropriate archive for your platform
+        2. Extract the binaries
+        3. Run `./fem-broker --listen :8443` to start a broker
+        4. Run `./fem-coder --broker https://localhost:8443 --agent my-agent` to connect an agent
+        
+        ## Documentation
+        
+        - [Protocol Specification](https://github.com/chazmaniandinkle/FEP-FEM/blob/main/docs/Protocol-Specification.md)
+        - [Getting Started Guide](https://github.com/chazmaniandinkle/FEP-FEM/blob/main/docs/Quick-Start.md)
+        - [Framework Documentation](https://github.com/chazmaniandinkle/FEP-FEM/blob/main/docs/FEM-Framework.md)
+        
+        ## Security
+        
+        All binaries are built with Go's static linking (`CGO_ENABLED=0`) for security and portability. Binaries are stripped for reduced size.
+        
+        ## Checksums
+        
+        SHA256 checksums for verification:
+        
+        ```
+        EOF
+        
+        # Generate checksums
+        cd release-assets
+        sha256sum * >> ../release-notes.md
+        echo '```' >> ../release-notes.md
+        cd ..
+    
+    - name: Create Release
+      uses: softprops/action-gh-release@v1
+      with:
+        files: release-assets/*
+        body_path: release-notes.md
+        draft: false
+        prerelease: false
+        generate_release_notes: true
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

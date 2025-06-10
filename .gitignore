@@ -6,6 +6,11 @@
 *.dylib
 bin/
 
+# FEM binary artifacts
+fem-broker
+fem-router
+fem-coder
+
 # Test binary, built with `go test -c`
 *.test
 
