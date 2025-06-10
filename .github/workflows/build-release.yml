@@ -36,7 +36,7 @@ jobs:
         # Build router
         cd router
         go mod tidy
-        go build -v .
+        go build -v ./cmd/fem-router
         cd ..
         
         # Build coder
@@ -93,7 +93,7 @@ jobs:
         # Build router  
         cd router
         go mod tidy
-        go build -ldflags="-s -w" -o ../release/fem-router-${{ matrix.goos }}-${{ matrix.goarch }}${SUFFIX} .
+        go build -ldflags="-s -w" -o ../release/fem-router-${{ matrix.goos }}-${{ matrix.goarch }}${SUFFIX} ./cmd/fem-router
         cd ..
         
         # Build coder
