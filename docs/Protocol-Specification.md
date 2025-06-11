@@ -15,6 +15,8 @@
 
 The Federated Embodiment Protocol (FEP) is a wire-level protocol designed for secure communication between autonomous AI agents in a federated network. FEP enables agents to register with brokers, emit events, execute tools, and collaborate across distributed systems while maintaining cryptographic security and capability-based authorization.
 
+**Key Integration**: FEP works in conjunction with the Model Context Protocol (MCP) to provide federation capabilities for MCP tools. While MCP defines how agents expose and consume tools, FEP provides the discovery, routing, and federation infrastructure that enables MCP tools to be shared securely across organizational boundaries.
+
 ### Key Design Principles
 
 1. **Decentralization**: No single point of control; agents can communicate across multiple brokers
@@ -23,6 +25,8 @@ The Federated Embodiment Protocol (FEP) is a wire-level protocol designed for se
 4. **Transport Agnostic**: Works over any reliable transport (HTTPS, WebSockets, etc.)
 5. **Extensible**: New envelope types and capabilities can be added
 6. **Federated**: Brokers can connect to form larger networks
+7. **MCP Compatible**: Seamlessly integrates with existing MCP tool ecosystems
+8. **Environment Aware**: Supports adaptive agent embodiment across deployment contexts
 
 ### Protocol Version
 
@@ -32,23 +36,31 @@ Current version: **v0.1.2**
 
 ### Core Concepts
 
-**Agent**: An autonomous entity that can execute code, process data, or perform other computational tasks. Agents have unique identifiers and declare their capabilities upon registration.
+**Agent**: An autonomous entity that can execute code, process data, or perform other computational tasks. Agents have unique identifiers and declare their capabilities upon registration. Each agent can simultaneously operate as both an MCP server (providing tools) and MCP client (consuming tools).
 
-**Broker**: A network node that facilitates communication between agents. Brokers handle message routing, capability matching, and federation with other brokers.
+**Broker**: A network node that facilitates communication between agents. Brokers handle message routing, capability matching, MCP tool discovery, and federation with other brokers.
 
 **Envelope**: A structured message format that wraps all FEP communications. Each envelope contains headers, body, and cryptographic signature.
 
-**Capability**: A declared ability of an agent (e.g., "code.execute", "file.read", "chat.respond"). Capabilities enable fine-grained access control.
+**Capability**: A declared ability of an agent (e.g., "code.execute", "file.read", "chat.respond"). Capabilities enable fine-grained access control and correspond to MCP tools that the agent can provide.
 
-**Federation**: The process of connecting multiple brokers to form a larger network, allowing agents on different brokers to interact.
+**Federation**: The process of connecting multiple brokers to form a larger network, allowing agents on different brokers to interact and share MCP tools.
+
+**Body Definition**: A specification that defines what MCP tools an agent should expose when embodied in a specific environment type (e.g., local development, cloud production, edge device).
+
+**Embodiment**: The process by which an agent adapts its collection of MCP tools based on its deployment environment, creating an optimized tool set for its operational context.
+
+**MCP Endpoint**: The HTTP endpoint where an agent exposes its MCP server, allowing other agents to discover and invoke its tools using standard MCP protocol.
 
 ### Message Flow
 
-1. **Registration**: Agent connects to broker and sends registerAgent envelope
-2. **Capability Declaration**: Agent declares what it can do (capabilities)
+1. **Registration**: Agent connects to broker and sends registerAgent envelope with MCP endpoint
+2. **Capability Declaration**: Agent declares its capabilities and available MCP tools
 3. **Authentication**: Broker verifies agent's cryptographic signature
-4. **Operation**: Agent can now emit events, receive instructions, execute tools
-5. **Federation**: Broker can route messages to agents on other connected brokers
+4. **Embodiment**: Agent registers body definition and environment-specific MCP tools
+5. **Tool Discovery**: Other agents can discover available MCP tools through FEP brokers
+6. **Operation**: Agent can emit events, execute tools via FEP, and invoke remote MCP tools
+7. **Federation**: Broker can route messages and MCP tool discovery across federated brokers
 
 ## Message Envelopes
 
@@ -80,7 +92,7 @@ All FEP communication uses structured message envelopes. Every envelope shares c
 
 ### Envelope Types
 
-FEP defines seven core envelope types:
+FEP defines ten core envelope types, including three new types for MCP tool discovery and embodiment:
 
 #### 1. registerAgent
 
@@ -96,9 +108,27 @@ Registers a new agent with a broker.
   "body": {
     "pubkey": "base64-encoded-ed25519-public-key",
     "capabilities": ["code.execute", "file.read", "shell.run"],
+    "mcpEndpoint": "https://agent-host:8080/mcp",
+    "bodyDefinition": {
+      "environmentType": "local-development",
+      "mcpTools": [
+        {
+          "name": "code.execute",
+          "description": "Execute Python code in sandbox",
+          "inputSchema": {
+            "type": "object",
+            "properties": {
+              "code": {"type": "string"},
+              "language": {"type": "string", "enum": ["python", "javascript"]}
+            }
+          }
+        }
+      ]
+    },
     "metadata": {
       "version": "1.0.0",
-      "description": "Python code execution agent"
+      "description": "Python code execution agent",
+      "supportedEnvironments": ["local", "container", "cloud"]
     }
   }
 }
@@ -106,8 +136,13 @@ Registers a new agent with a broker.
 
 **Body Fields**:
 - `pubkey`: Agent's Ed25519 public key for signature verification
-- `capabilities`: Array of capability strings the agent provides
-- `metadata`: Optional additional information about the agent
+- `capabilities`: Array of capability strings the agent provides (corresponds to MCP tools)
+- `mcpEndpoint`: HTTP URL where the agent's MCP server can be accessed
+- `bodyDefinition`: Specification of MCP tools and environment configuration
+  - `environmentType`: Type of environment the agent is embodied in
+  - `mcpTools`: Array of MCP tool definitions following MCP schema
+- `metadata`: Additional information about the agent
+  - `supportedEnvironments`: Array of environment types the agent can embody in
 
 #### 2. registerBroker
 
@@ -265,6 +300,135 @@ Revokes an agent's registration or specific capabilities.
 **Body Fields**:
 - `target`: Agent identifier to revoke
 - `reason`: Optional human-readable reason for revocation
+
+#### 8. discoverTools
+
+Requests discovery of available MCP tools matching specified criteria.
+
+```json
+{
+  "type": "discoverTools",
+  "agent": "orchestrator-001",
+  "ts": 1641234567890,
+  "nonce": "discover-66666",
+  "sig": "Up2H7aRvL...",
+  "body": {
+    "query": {
+      "capabilities": ["file.*", "data.process"],
+      "environmentType": "cloud",
+      "maxResults": 10,
+      "includeMetadata": true
+    },
+    "requestId": "discovery-req-001"
+  }
+}
+```
+
+**Body Fields**:
+- `query`: Discovery query parameters
+  - `capabilities`: Array of capability patterns to match (supports wildcards)
+  - `environmentType`: Optional filter by environment type
+  - `maxResults`: Maximum number of results to return
+  - `includeMetadata`: Whether to include detailed metadata
+- `requestId`: Unique identifier to correlate with response
+
+#### 9. toolsDiscovered
+
+Response containing discovered MCP tools matching the query.
+
+```json
+{
+  "type": "toolsDiscovered",
+  "agent": "broker-west-001",
+  "ts": 1641234567890,
+  "nonce": "discovered-77777",
+  "sig": "Vq3I8bSwM...",
+  "body": {
+    "requestId": "discovery-req-001",
+    "tools": [
+      {
+        "agentId": "file-agent-001",
+        "mcpEndpoint": "https://agent1.example.com:8080/mcp",
+        "capabilities": ["file.read", "file.write"],
+        "environmentType": "cloud",
+        "mcpTools": [
+          {
+            "name": "file.read",
+            "description": "Read file from cloud storage",
+            "inputSchema": {
+              "type": "object",
+              "properties": {
+                "bucket": {"type": "string"},
+                "key": {"type": "string"}
+              }
+            }
+          }
+        ],
+        "metadata": {
+          "lastSeen": 1641234567890,
+          "averageResponseTime": 150,
+          "trustScore": 0.95
+        }
+      }
+    ],
+    "totalResults": 1,
+    "hasMore": false
+  }
+}
+```
+
+**Body Fields**:
+- `requestId`: Correlates with original discovery request
+- `tools`: Array of discovered tool information
+  - `agentId`: Unique identifier of the agent providing tools
+  - `mcpEndpoint`: HTTP endpoint for MCP server
+  - `capabilities`: Array of capabilities this agent provides
+  - `environmentType`: Environment type where agent is embodied
+  - `mcpTools`: Detailed MCP tool definitions
+  - `metadata`: Additional information about the agent
+- `totalResults`: Total number of matching tools found
+- `hasMore`: Whether additional results are available
+
+#### 10. embodimentUpdate
+
+Notifies broker of changes to agent's embodiment (environment-specific tool changes).
+
+```json
+{
+  "type": "embodimentUpdate",
+  "agent": "adaptive-agent-001",
+  "ts": 1641234567890,
+  "nonce": "embody-88888",
+  "sig": "Wr4J9cTxN...",
+  "body": {
+    "previousEnvironment": "local-development",
+    "newEnvironment": "cloud-production",
+    "bodyDefinition": {
+      "environmentType": "cloud-production",
+      "mcpTools": [
+        {
+          "name": "file.read",
+          "description": "Read file from S3",
+          "inputSchema": {
+            "type": "object",
+            "properties": {
+              "bucket": {"type": "string"},
+              "key": {"type": "string"}
+            }
+          }
+        }
+      ]
+    },
+    "reason": "Environment migration detected"
+  }
+}
+```
+
+**Body Fields**:
+- `previousEnvironment`: Previous environment type (if any)
+- `newEnvironment`: New environment type
+- `bodyDefinition`: Updated body definition with new MCP tools
+- `reason`: Optional reason for the embodiment change
 
 ## Security Model
 
