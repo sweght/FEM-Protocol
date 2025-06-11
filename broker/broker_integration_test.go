@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"crypto/tls"
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -445,4 +446,115 @@ func TestBrokerErrorHandling(t *testing.T) {
 			t.Errorf("Expected status 400, got %d", resp.StatusCode)
 		}
 	})
+}
+
+func TestFullMCPFederationLoop(t *testing.T) {
+	// Start a test broker
+	broker := NewBroker()
+	server := httptest.NewTLSServer(broker)
+	defer server.Close()
+
+	// HTTP client for the agents and tests
+	testClient := &http.Client{
+		Transport: &http.Transport{
+			TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
+		},
+	}
+
+	// Simulate agent registration with MCP endpoint
+	agent1ID := "integration-agent-001"
+	pubKey1, privKey1, _ := protocol.GenerateKeyPair()
+	mcpPort1 := 8090
+	
+	// Create and send registration envelope for agent 1
+	mcpTools := []protocol.MCPTool{
+		{Name: "math.add", Description: "Add two numbers"},
+		{Name: "code.execute", Description: "Execute commands"},
+	}
+	
+	regBody1 := protocol.RegisterAgentBody{
+		PubKey:          protocol.EncodePublicKey(pubKey1),
+		Capabilities:    []string{"math.add", "code.execute"},
+		MCPEndpoint:     fmt.Sprintf("http://localhost:%d/mcp", mcpPort1),
+		BodyDefinition:  &protocol.BodyDefinition{Name: "test-body", MCPTools: mcpTools},
+		EnvironmentType: "test",
+	}
+	
+	regEnv1 := &protocol.RegisterAgentEnvelope{
+		BaseEnvelope: protocol.BaseEnvelope{
+			Type: protocol.EnvelopeRegisterAgent, 
+			CommonHeaders: protocol.CommonHeaders{
+				Agent: agent1ID, 
+				TS: time.Now().UnixMilli(), 
+				Nonce: "nonce1",
+			},
+		},
+		Body: regBody1,
+	}
+	regEnv1.Sign(privKey1)
+	regData1, _ := json.Marshal(regEnv1)
+	
+	resp, err := testClient.Post(server.URL+"/", "application/json", bytes.NewReader(regData1))
+	if err != nil {
+		t.Fatalf("Agent 1 registration failed: %v", err)
+	}
+	if resp.StatusCode != http.StatusOK {
+		t.Fatalf("Agent 1 registration returned non-200 status: %d", resp.StatusCode)
+	}
+
+	// Verify agent is registered in broker
+	agent, exists := broker.mcpRegistry.GetAgent(agent1ID)
+	if !exists {
+		t.Fatal("Agent should be registered in MCP registry")
+	}
+	
+	if len(agent.Tools) != 2 {
+		t.Errorf("Expected 2 tools, got %d", len(agent.Tools))
+	}
+
+	// Test tool discovery
+	_, clientPrivKey, _ := protocol.GenerateKeyPair()
+	
+	discoverEnv := &protocol.DiscoverToolsEnvelope{
+		BaseEnvelope: protocol.BaseEnvelope{
+			Type: protocol.EnvelopeDiscoverTools,
+			CommonHeaders: protocol.CommonHeaders{
+				Agent: "test-mcp-client",
+				TS:    time.Now().UnixMilli(),
+				Nonce: "discover-nonce",
+			},
+		},
+		Body: protocol.DiscoverToolsBody{
+			Query: protocol.ToolQuery{
+				Capabilities: []string{"math.add"},
+			},
+			RequestID: "discovery-req-1",
+		},
+	}
+	discoverEnv.Sign(clientPrivKey)
+	discoverData, _ := json.Marshal(discoverEnv)
+	
+	resp, err = testClient.Post(server.URL+"/", "application/json", bytes.NewReader(discoverData))
+	if err != nil {
+		t.Fatalf("Tool discovery failed: %v", err)
+	}
+	
+	var discoveryResponse map[string]interface{}
+	json.NewDecoder(resp.Body).Decode(&discoveryResponse)
+	
+	if discoveryResponse["status"] != "success" {
+		t.Errorf("Discovery should succeed, got: %v", discoveryResponse["status"])
+	}
+	
+	tools, ok := discoveryResponse["tools"].([]interface{})
+	if !ok || len(tools) == 0 {
+		t.Fatal("Should discover at least one tool")
+	}
+	
+	discoveredTool := tools[0].(map[string]interface{})
+	if discoveredTool["agentId"] != agent1ID {
+		t.Errorf("Discovered tool from wrong agent. Expected %s, got %s", agent1ID, discoveredTool["agentId"])
+	}
+	
+	t.Log("Successfully discovered agent's tool via the broker.")
 }
