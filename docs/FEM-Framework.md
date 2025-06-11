@@ -1,10 +1,12 @@
-# FEM Framework Architecture
+# FEM Framework Architecture: MCP Federation at Scale
 
-The Federated Embodied Mesh (FEM) framework implements the Federated Embodiment Protocol (FEP) to create a secure, distributed network of autonomous AI agents.
+The Federated Embodied Mesh (FEM) framework implements both the Federated Embodiment Protocol (FEP) and Model Context Protocol (MCP) to create a secure, distributed network of adaptive AI agents that can discover, share, and embody MCP tools across environments.
 
 ## Table of Contents
 - [Architecture Overview](#architecture-overview)
 - [Core Components](#core-components)
+- [MCP Integration Layer](#mcp-integration-layer)
+- [Embodiment Architecture](#embodiment-architecture)
 - [Message Flow](#message-flow)
 - [Network Topology](#network-topology)
 - [Security Architecture](#security-architecture)
@@ -12,12 +14,15 @@ The Federated Embodied Mesh (FEM) framework implements the Federated Embodiment 
 
 ## Architecture Overview
 
-FEM follows a **federated broker-agent architecture** where:
+FEM follows a **federated MCP-enabled broker-agent architecture** where:
 
-1. **Brokers** manage message routing and agent registration
-2. **Agents** perform computational tasks and communicate via brokers
-3. **Federation** allows brokers to connect for larger networks
-4. **Capabilities** define what agents can do with fine-grained permissions
+1. **Brokers** manage MCP tool discovery, routing, and federation coordination
+2. **Agents** embody themselves with environment-specific MCP tools and communicate via FEP
+3. **MCP Integration** enables agents to expose tools via MCP servers and consume tools via MCP clients
+4. **Embodiment** allows agents to adapt their MCP tool collections based on deployment environment
+5. **Federation** enables MCP tools to be discovered and shared across organizational boundaries
+
+**Key Insight**: FEM doesn't replace MCP—it federates it, transforming isolated MCP servers into a global network of discoverable, adaptive AI capabilities.
 
 ```
 ┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
@@ -127,9 +132,155 @@ func (b *Broker) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 **Agent Lifecycle**:
 ```
-Registration → Authentication → Operation → Deregistration
-     ↓              ↓             ↓            ↓
-  Send pubkey → Verify sig → Process tools → Clean state
+Registration → Authentication → Embodiment → Operation → Deregistration
+     ↓              ↓             ↓           ↓            ↓
+  Send pubkey → Verify sig → Select body → Use MCP tools → Clean state
+```
+
+## MCP Integration Layer
+
+FEM's core innovation is providing federation infrastructure for MCP tools while maintaining full compatibility with the MCP standard.
+
+### Dual Protocol Architecture
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│                   FEM Agent                                 │
+│  ┌─────────────────┐              ┌─────────────────┐      │
+│  │   MCP Server    │              │   MCP Client    │      │
+│  │   (Provides     │              │   (Consumes     │      │
+│  │   Tools)        │              │   Tools)        │      │
+│  └─────────┬───────┘              └─────────┬───────┘      │
+│            │                                │              │
+│  ┌─────────▼────────────────────────────────▼───────┐      │
+│  │              FEP Protocol Layer                  │      │
+│  │        (Federation & Discovery)                  │      │
+│  └─────────────────┬─────────────────────────────────┘      │
+└────────────────────┼───────────────────────────────────────┘
+                     │
+     ┌───────────────▼───────────────┐
+     │         FEM Broker            │
+     │   (MCP Tool Discovery &       │
+     │    Federation Registry)       │
+     └───────────────────────────────┘
+```
+
+### MCP Tool Discovery Flow
+
+1. **Tool Registration**: Agent registers with broker, advertising MCP endpoint and available tools
+2. **Tool Discovery**: Other agents query broker for capabilities matching their needs
+3. **Direct Connection**: Agent connects directly to remote agent's MCP server  
+4. **Tool Invocation**: Standard MCP protocol used for tool calls
+5. **Result Handling**: Responses flow back through MCP client
+
+### Body Definition and MCP Tools
+
+Each agent body defines its MCP tool collection:
+
+```go
+type BodyDefinition struct {
+    BodyID          string           `json:"bodyId"`
+    EnvironmentType string           `json:"environmentType"`
+    MCPEndpoint     string           `json:"mcpEndpoint"`
+    MCPTools        []MCPToolDef     `json:"mcpTools"`
+    Capabilities    []string         `json:"capabilities"`
+    SecurityPolicy  SecurityPolicy   `json:"securityPolicy"`
+}
+
+type MCPToolDef struct {
+    Name        string      `json:"name"`
+    Description string      `json:"description"`
+    InputSchema interface{} `json:"inputSchema"`
+    Handler     string      `json:"handler"`
+}
+```
+
+### Environment-Specific Tool Adaptation
+
+```go
+// Example: File agent with environment-aware MCP tools
+func (a *FileAgent) EmbodyEnvironment(env Environment) error {
+    switch env.Type {
+    case "local":
+        a.mcpServer.RegisterTool("file.read", a.readFromFilesystem)
+        a.mcpServer.RegisterTool("file.write", a.writeToFilesystem)
+        
+    case "cloud":
+        a.mcpServer.RegisterTool("file.read", a.readFromS3)
+        a.mcpServer.RegisterTool("file.write", a.writeToS3)
+        
+    case "browser":
+        a.mcpServer.RegisterTool("file.read", a.readFromIndexedDB)
+        a.mcpServer.RegisterTool("file.download", a.downloadFromURL)
+    }
+    
+    // Register with broker
+    return a.registerWithBroker(env)
+}
+```
+
+## Embodiment Architecture
+
+### Mind-Body-Environment Model
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│                        Environment                          │
+│                   (Deployment Context)                      │
+│  ┌─────────────────────────────────────────────────────┐   │
+│  │                     Agent                           │   │
+│  │  ┌─────────────┐         ┌─────────────────────┐   │   │
+│  │  │    Mind     │◄───────►│        Body         │   │   │
+│  │  │             │         │                     │   │   │
+│  │  │ - Identity  │         │ - MCP Server        │   │   │
+│  │  │ - Logic     │         │ - MCP Client        │   │   │
+│  │  │ - Memory    │         │ - Tool Collection   │   │   │
+│  │  │ - Decision  │         │ - Capabilities      │   │   │
+│  │  └─────────────┘         └─────────────────────┘   │   │
+│  └─────────────────────────────────────────────────────┘   │
+│                                                             │
+│  Environment Properties:                                    │
+│  - Computational Resources                                  │
+│  - Security Context                                         │
+│  - Network Topology                                         │
+│  - Regulatory Constraints                                   │
+│  - Available Services & APIs                                │
+└─────────────────────────────────────────────────────────────┘
+```
+
+### Embodiment Process
+
+1. **Environment Detection**: Agent analyzes deployment context
+2. **Body Selection**: Chooses appropriate body definition for environment
+3. **Tool Instantiation**: Registers environment-specific MCP tools
+4. **Capability Declaration**: Advertises capabilities to FEM broker
+5. **Network Integration**: Begins discovering and using other agents' tools
+
+### Multi-Body Agent Pattern
+
+Advanced agents can maintain multiple bodies simultaneously:
+
+```go
+type MultiBodyAgent struct {
+    mind   AgentMind
+    bodies map[string]*Body  // Multiple active bodies
+}
+
+func (a *MultiBodyAgent) AddBody(envType string, def BodyDefinition) error {
+    body := &Body{
+        definition: def,
+        mcpServer:  NewMCPServer(def.MCPEndpoint),
+        mcpClient:  NewMCPClient(),
+    }
+    
+    // Register environment-specific tools
+    for _, tool := range def.MCPTools {
+        body.mcpServer.RegisterTool(tool.Name, tool.Handler)
+    }
+    
+    a.bodies[envType] = body
+    return a.registerBodyWithBroker(body)
+}
 ```
 
 ## Message Flow

@@ -1,90 +1,290 @@
-# Federated Embodiment Protocol (FEP) & Federated Embodied Mesh (FEM)
+# 🌐 Federated Embodiment Protocol (FEP) & Federated Embodied Mesh (FEM)
 
-**FEP** is the wire-level protocol for secure federated AI agent communication. **FEM** is the reference framework that implements it.
+> **The missing federation layer for MCP tools — Build networks of intelligent agents that discover, share, and adapt their capabilities securely at scale.**
 
 [![Release](https://img.shields.io/github/v/release/chazmaniandinkle/FEP-FEM)](https://github.com/chazmaniandinkle/FEP-FEM/releases)
 [![Go Tests](https://github.com/chazmaniandinkle/FEP-FEM/workflows/Build%20and%20Release/badge.svg)](https://github.com/chazmaniandinkle/FEP-FEM/actions)
-[![License](https://img.shields.io/badge/License-CC%20BY--SA%204.0-lightgrey.svg)](https://creativecommons.org/licenses/by-sa/4.0/)
+[![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](LICENSE-CODE)
+[![Documentation](https://img.shields.io/badge/Docs-CC%20BY--SA%204.0-lightgrey.svg)](LICENSE-DOCS)
 
-## Quick Start
+## 🎯 What is FEP-FEM?
 
-### Download Pre-built Binaries
+FEP-FEM doesn't replace MCP—it **federates** it. Think of it as the missing piece that transforms MCP from isolated tool servers into a global network of discoverable, secure, and adaptable AI capabilities.
 
-Download the latest release for your platform from [GitHub Releases](https://github.com/chazmaniandinkle/FEP-FEM/releases/latest).
+- **FEP (Protocol)**: Secure federation layer for distributed agent communication
+- **FEM (Framework)**: Implements both FEP (for federation) AND MCP (for tool interfaces)  
+- **MCP Integration**: Every FEM agent can expose tools via MCP server and consume tools via MCP client
 
-### Start a FEM Network
+**The Vision**: Any MCP tool, anywhere in the network, discoverable and usable by any compatible agent or LLM—with cryptographic security and environment-aware adaptation.
+
+## 🚀 Why FEP-FEM?
+
+### The Problem with MCP Today
+- **Isolated Tools**: Each MCP server is a silo; no discovery mechanism
+- **Manual Configuration**: Must hardcode every MCP endpoint 
+- **No Federation**: Can't share tools across organizations securely
+- **Static Deployment**: Tools can't adapt to different environments
+
+### The FEP-FEM Solution
+FEP-FEM provides the **federation infrastructure** that MCP needs:
+- 🔍 **Dynamic Discovery**: Find any MCP tool across the federated network
+- 🤝 **Secure Sharing**: Share tools across organizations with cryptographic guarantees
+- 📈 **Adaptive Embodiment**: Same agent, different tools based on deployment environment
+- 🔐 **Zero-Trust Federation**: Every message cryptographically signed and verified
+
+## 💡 Core Innovation: Embodied AI Agents
+
+### Mind + Body + Environment = Embodied Agent
+
+- **Mind**: Your agent's core logic and identity (persistent across environments)
+- **Body**: Collection of MCP tools available to the agent (changes with environment)
+- **Environment**: Where the agent is deployed (local, cloud, browser, mobile, etc.)
+
+### Example: Universal File Agent
+
+```python
+# Same mind, different bodies based on environment
+class FileAgent(FEMAgent):
+    def embody_local(self):
+        # Local development environment
+        self.mcp_server.register_tool("file.read", read_from_filesystem)
+        self.mcp_server.register_tool("file.write", write_to_filesystem)
+        
+    def embody_cloud(self):
+        # Cloud production environment  
+        self.mcp_server.register_tool("file.read", read_from_s3)
+        self.mcp_server.register_tool("file.write", write_to_s3)
+        
+    def embody_browser(self):
+        # Browser extension environment
+        self.mcp_server.register_tool("file.read", read_from_indexeddb)
+        self.mcp_server.register_tool("file.download", download_from_url)
+
+# Other agents always call the same interface
+file_content = await any_agent.call_tool("file.read", {"path": "data.txt"})
+# But the implementation adapts to environment automatically
+```
+
+## 🏃 Quick Start
+
+### 30-Second MCP Federation Demo
 
 ```bash
-# Start the broker
+# Download and extract
+wget https://github.com/chazmaniandinkle/FEP-FEM/releases/latest/download/fem-v0.1.3-linux-amd64.tar.gz
+tar -xzf fem-*.tar.gz
+
+# Start broker (coordinates MCP tool discovery)
+./fem-broker --listen :8443 &
+
+# Agent 1: Expose calculator tools via MCP
+./fem-coder --broker https://localhost:8443 --agent calculator \
+  --mcp-server :3001 --mcp-tools "math.add,math.multiply"
+
+# Agent 2: Discover and use calculator tools
+./fem-coder --broker https://localhost:8443 --agent consumer \
+  --discover-mcp-tools
+
+# ✨ Agent 2 can now discover and use Agent 1's calculator tools!
+```
+
+### Your First Federated MCP Network
+
+1. **Start the FEM Broker** (handles MCP tool discovery and federation):
+```bash
 ./fem-broker --listen :8443
-
-# In another terminal, start an agent
-./fem-coder --broker https://localhost:8443 --agent my-coding-agent
 ```
 
-### Build from Source
-
+2. **Connect Agents with MCP Tools**:
 ```bash
-# Clone the repository
-git clone https://github.com/chazmaniandinkle/FEP-FEM.git
-cd FEP-FEM
+# Terminal 1: Code execution agent
+./fem-coder --broker https://localhost:8443 --agent coder-1 \
+  --mcp-server :3001 --mcp-tools "code.python,code.javascript"
 
-# Build all components
-make build
+# Terminal 2: Data analysis agent  
+./fem-coder --broker https://localhost:8443 --agent analyzer-1 \
+  --mcp-server :3002 --mcp-tools "data.csv,data.json,data.visualize"
 
-# Run the test network
-./test-network.sh
+# Terminal 3: File management agent
+./fem-coder --broker https://localhost:8443 --agent files-1 \
+  --mcp-server :3003 --mcp-tools "file.read,file.write,file.list"
 ```
 
-## Project Status
+3. **Use Any Tool from Any Agent**:
+```bash
+# Any agent can now discover and use tools from others
+curl -X POST https://localhost:8443/discover \
+  -d '{"capability": "data.*"}' 
+# Returns: agents analyzer-1 has data.csv, data.json, data.visualize
 
-🚀 **Production Ready** - Complete implementation with cross-platform releases, comprehensive documentation, and proven functionality.
-
-### Core Components
-
-- **fem-broker** - Message broker for agent coordination and federation
-- **fem-router** - Mesh networking router for multi-broker deployments  
-- **fem-coder** - Sandboxed code execution agent with tool capabilities
-
-### Features
-
-✅ **Complete FEP Protocol** - All 7 envelope types implemented with Ed25519 signatures  
-✅ **Cryptographic Security** - End-to-end message signing and verification  
-✅ **Capability-Based Authorization** - Fine-grained permission system  
-✅ **Cross-Platform Releases** - Linux, macOS, Windows (amd64, arm64)  
-✅ **Comprehensive Documentation** - Protocol specification and guides  
-✅ **Automated Testing** - 24+ unit tests with CI/CD integration  
-✅ **Docker Support** - Container images for all components  
-
-## Documentation
-
-- 📋 [Protocol Specification](docs/Protocol-Specification.md) - Complete FEP protocol documentation
-- 🚀 [Quick Start Guide](docs/Quick-Start.md) - Get up and running fast
-- 🏗️ [Framework Architecture](docs/FEM-Framework.md) - Deep dive into FEM design
-- 🔐 [Security Guide](docs/Security.md) - Cryptography and security model
-- 🛠️ [Agent Development](docs/Agent-Development.md) - Build custom agents
-- 🌐 [Deployment Guide](docs/Deployment.md) - Production deployment
-
-## Repository Structure
-
-```
-├── protocol/go/          # Core FEP protocol implementation (Go)
-├── broker/               # FEP message broker
-├── router/               # Mesh networking router  
-├── bodies/coder/         # Code execution agent
-├── docs/                 # Complete documentation
-├── .github/workflows/    # CI/CD automation
-└── Makefile             # Build system
+# Direct MCP tool invocation
+curl -X POST http://localhost:3002/mcp \
+  -d '{"method": "tools/call", "params": {"name": "data.csv", "arguments": {"file": "sales.csv"}}}'
 ```
 
-## Contributing
+## 🔑 Key Concepts
 
-See [CONTRIBUTING.md](CONTRIBUTING.md) for development setup, code style, and submission guidelines.
+### Agents as MCP Federators
+Every FEM agent is simultaneously:
+- **MCP Server**: Exposes its capabilities as discoverable tools
+- **MCP Client**: Can discover and use tools from other agents
+- **FEP Participant**: Participates in secure federation protocol
 
-## License & Attribution
+### Environment-Aware Bodies
+Agents adapt their MCP tool collections based on deployment environment:
 
-This project is licensed under [Apache 2.0](LICENSE-CODE) for code and [CC-BY-SA 4.0](LICENSE-DOCS) for documentation. 
+```
+Agent Mind: "Data Processor"
+├── Local Body → Tools: [file.read, shell.exec, python.run]
+├── Cloud Body → Tools: [s3.read, lambda.invoke, athena.query] 
+├── Edge Body → Tools: [sensor.read, cache.local, compress.data]
+└── Browser Body → Tools: [indexeddb.read, worker.spawn, canvas.draw]
+```
 
-See [Attribution](docs/Attribution.md) for authors, upstream dependencies, and credits.
+### Cross-Organization Federation
+Organizations can securely share MCP tools without exposing infrastructure:
 
-© 2025 Chaz Dinkle — Apache 2.0 (code) / CC-BY-SA 4.0 (documentation)
+```
+Organization A          FEM Federation          Organization B
+┌─────────────┐       ┌─────────────┐       ┌─────────────┐
+│ MCP Tools:  │◄─────►│   Secure    │◄─────►│ MCP Tools:  │
+│ - analyze   │       │  Brokering  │       │ - visualize │
+│ - validate  │       │             │       │ - export    │
+└─────────────┘       └─────────────┘       └─────────────┘
+```
+
+Org A can use Org B's visualization tools without raw data ever leaving Org A.
+
+## 💼 Real-World Use Cases
+
+### 1. **Federated AI Workbench**
+```
+Research Org: "We have specialized ML analysis tools"
+University: "We have large datasets but basic tools"
+└─► FEM Federation enables secure collaboration without data transfer
+```
+
+### 2. **Multi-Cloud Agent Deployment**
+```
+Agent: "I need file storage"
+FEM: "You're in AWS → here are S3 tools"
+FEM: "Now you're in GCP → here are Cloud Storage tools"
+└─► Same agent logic, environment-appropriate tools
+```
+
+### 3. **Enterprise Tool Marketplace**
+```
+Engineering: Publishes code.* MCP tools to FEM network
+Data Science: Discovers and uses code.python for their pipelines  
+DevOps: Uses code.docker for deployment automation
+└─► Internal tool reuse without custom integrations
+```
+
+## 🛡️ Security-First Federation
+
+Every MCP tool call through FEM is:
+- ✅ **Cryptographically Signed** (Ed25519)
+- ✅ **Capability Verified** (agents only use declared tools)
+- ✅ **Environment Isolated** (tools run in appropriate sandbox)
+- ✅ **Audit Logged** (complete federation trail)
+
+**Zero-Trust Model**: Agents cryptographically prove their identity and are only granted minimum required capabilities.
+
+## 🏗️ Architecture: MCP + FEP Integration
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│                    Your Application                         │
+└─────────────────────┬───────────────────────────────────────┘
+                      │
+┌─────────────────────▼───────────────────────────────────────┐
+│                   FEM Framework                             │
+│  ┌─────────────┐  ┌─────────────┐  ┌─────────────┐         │
+│  │   Agent A   │  │   Agent B   │  │   Agent C   │         │
+│  │             │  │             │  │             │         │
+│  │ MCP Server  │  │ MCP Server  │  │ MCP Server  │         │ 
+│  │ MCP Client  │◄─│ MCP Client  │─►│ MCP Client  │         │
+│  └─────┬───────┘  └─────┬───────┘  └─────┬───────┘         │
+│        │                │                │                 │
+│  ┌─────▼────────────────▼────────────────▼───────┐         │
+│  │              FEM Broker                       │         │
+│  │      (MCP Tool Discovery & Federation)        │         │
+│  └───────────────────┬───────────────────────────┘         │
+└──────────────────────┼───────────────────────────────────────┘
+                       │
+┌──────────────────────▼───────────────────────────────────────┐
+│                   FEP Protocol                              │
+│        (Secure Federation & Agent Communication)            │
+└─────────────────────────────────────────────────────────────┘
+```
+
+## 📦 What's Included
+
+- **fem-broker** - MCP tool discovery and federation coordinator
+- **fem-router** - Mesh networking for multi-broker federation
+- **fem-coder** - Reference agent with MCP server/client
+- **FEP Protocol** - Complete federation specification
+- **Go SDK** - Build federated MCP agents
+- **Body Templates** - Environment-specific MCP tool configurations
+
+## 🚧 Current State & Roadmap
+
+### ✅ Available Now (v0.1.3)
+- Complete FEP protocol with cryptographic security
+- Basic broker and agent implementations with MCP support
+- Cross-platform releases (Linux, macOS, Windows)
+- Environment detection and basic embodiment
+
+### 🔄 In Development
+- [ ] Full MCP server/client integration in agents
+- [ ] Dynamic MCP tool discovery via FEP brokers
+- [ ] Cross-broker MCP tool federation
+- [ ] Body definition templates and RBAC
+- [ ] TypeScript and Python SDKs
+
+### 🎯 Future Vision
+- Global MCP tool marketplace
+- Visual agent workflow builder
+- Integration with Claude Desktop and other MCP clients
+- Standards adoption across AI agent frameworks
+
+## 📚 Documentation
+
+- **[Ontology](docs/Ontology.md)** - Core concepts: Mind, Body, Environment, Embodiment
+- **[Quick Start Guide](docs/Quick-Start.md)** - Get running in 5 minutes
+- **[MCP Integration](docs/MCP-Integration.md)** - Migrate existing MCP tools
+- **[Embodiment Guide](docs/Embodiment-Guide.md)** - Environment-specific patterns
+- **[Framework Architecture](docs/FEM-Framework.md)** - Technical deep dive
+- **[Protocol Specification](docs/Protocol-Specification.md)** - FEP wire protocol
+- **[Security Model](docs/Security.md)** - Cryptography and trust model
+
+## 🤝 Community & Contributing
+
+FEP-FEM is open source and we welcome contributions!
+
+- **GitHub Issues** - Report bugs or request features
+- **Pull Requests** - Submit improvements  
+- **Discussions** - Share ideas and get help
+
+See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
+
+## 🙏 Acknowledgments
+
+FEP-FEM builds on ideas from:
+- **Model Context Protocol (MCP)** by Anthropic - The standard for AI tool interfaces
+- **Embodied Cognition** theory - Intelligence through environment interaction
+- **Capability-based Security** - Fine-grained access control
+- **Event-driven Architectures** - Reactive, scalable systems
+
+See [Attribution](docs/Attribution.md) for full credits.
+
+## 📄 License
+
+- **Code**: [Apache 2.0](LICENSE-CODE)
+- **Documentation**: [CC-BY-SA 4.0](LICENSE-DOCS)
+
+---
+
+**Ready to federate your MCP tools?** [Get Started →](docs/Quick-Start.md)
+
+*FEP-FEM: Where MCP tools meet global federation.*
