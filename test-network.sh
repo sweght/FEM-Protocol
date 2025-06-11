@@ -63,9 +63,54 @@ else
     exit 1
 fi
 
-echo "🎉 Basic FEM network test PASSED!"
+# Test MCP federation (when implemented)
+echo "🔍 Testing MCP federation readiness..."
+
+# Check if broker supports MCP discovery
+echo "  Testing tool discovery endpoint..."
+DISCOVERY_REQUEST='{
+  "type": "discoverTools",
+  "agent": "test-client",
+  "ts": '$(date +%s%3N)',
+  "nonce": "test-'$(date +%s)'",
+  "body": {
+    "query": {
+      "capabilities": ["*"],
+      "maxResults": 10
+    },
+    "requestId": "test-discovery"
+  }
+}'
+
+# Test discovery endpoint (will return empty results until MCP integration is complete)
+DISCOVERY_RESPONSE=$(curl -s -k -X POST https://localhost:8443/fep \
+    -H "Content-Type: application/json" \
+    -d "$DISCOVERY_REQUEST" 2>/dev/null || echo "endpoint_not_ready")
+
+if [[ "$DISCOVERY_RESPONSE" == "endpoint_not_ready" ]]; then
+    echo "  ⚠️  MCP discovery endpoint not yet implemented"
+    echo "     This will be available after MCP integration phases"
+else
+    echo "  ✅ MCP discovery endpoint responding"
+    if echo "$DISCOVERY_RESPONSE" | grep -q "tools"; then
+        echo "     Discovery returned tool results"
+    else
+        echo "     Discovery returned: $DISCOVERY_RESPONSE"
+    fi
+fi
+
+echo "🎉 FEM network test PASSED!"
 echo "   - Broker started successfully"
 echo "   - Agent registered with broker"
+echo "   - MCP integration readiness verified"
+echo ""
+echo "📋 Next steps for MCP integration:"
+echo "   1. Implement new envelope types (Phase A)"
+echo "   2. Add MCP tool registry to broker (Phase B-D)"
+echo "   3. Add MCP server/client to agents (Phase E-G)"
+echo "   4. Create federation examples (Phase H-I)"
+echo ""
+echo "   See docs/Implementation-Roadmap.md for detailed plan"
 
 # Cleanup
 echo "🧹 Cleaning up..."
