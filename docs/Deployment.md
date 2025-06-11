@@ -14,42 +14,62 @@ Production deployment strategies for FEP-FEM networks across various environment
 
 ## Deployment Overview
 
+FEP-FEM supports multiple deployment patterns optimized for different scales and requirements. With MCP federation capabilities, deployments must also consider tool discovery, embodiment management, and cross-organizational federation.
+
 ### Architecture Patterns
 
-**Single Broker**
+**Single Broker with MCP Registry**
 ```
-┌─────────────┐
-│   Broker    │ ← Single point of coordination
-└──────┬──────┘
+┌─────────────────┐
+│   FEM Broker    │ ← Coordinates agents + MCP tool registry
+│  + MCP Registry │
+└──────┬──────────┘
    ┌───┼───┐
    │   │   │
-  A1  A2  A3    ← Agents connect to one broker
+  A1  A2  A3    ← Agents expose MCP tools, discover others
+ MCP MCP MCP
 ```
 
-**Federated Brokers**
+**Federated Brokers with Tool Sharing**
 ```
-┌─────────┐     ┌─────────┐
-│Broker A │◄───►│Broker B │ ← Cross-broker communication
-└────┬────┘     └────┬────┘
- ┌───┼───┐       ┌───┼───┐
- │   │   │       │   │   │
-A1  A2  A3      B1  B2  B3
-```
-
-**Mesh Network**
-```
-     ┌─────────┐
-     │Broker A │
-     └────┬────┘
-      ┌───┼───┐
-      │       │
-┌─────▼───┐ ┌─▼─────┐
-│Broker B │ │Broker │ ← Full mesh connectivity
-│         │◄┤   C   │
-└─────────┘ └───────┘
+┌─────────────┐     ┌─────────────┐
+│Broker A     │◄───►│Broker B     │ ← Cross-broker tool discovery
+│+ MCP Registry│     │+ MCP Registry│
+└────┬────────┘     └────┬────────┘
+ ┌───┼───┐           ┌───┼───┐
+ │   │   │           │   │   │
+A1  A2  A3          B1  B2  B3
+│   │   │           │   │   │
+└─MCP tools─────────MCP tools─┘
+    Shared across brokers
 ```
 
-### Deployment Considerations
+**Multi-Environment Embodiment**
+```
+    ┌─────────┐
+    │ Broker  │
+    └────┬────┘
+    ┌────┼────┐
+    │         │
+┌───▼───┐ ┌──▼────┐
+│Agent A│ │Agent B│
+│Local  │ │Cloud  │
+│Env    │ │Env    │
+└───────┘ └───────┘
+│         │
+Local     S3/Lambda
+Tools     Tools
+```
+
+### MCP Federation Deployment Considerations
+
+- **Tool Discovery Performance** - Registry size, search indexing
+- **MCP Endpoint Management** - Dynamic port allocation, service discovery
+- **Embodiment Complexity** - Environment detection, tool adaptation
+- **Cross-Organization Security** - Tool access policies, data boundaries
+- **Federation Latency** - Tool call routing, remote execution delays
+
+### Traditional Deployment Considerations
 
 - **Latency Requirements** - Geographic distribution
 - **Availability Needs** - Single points of failure  
@@ -65,6 +85,36 @@ A1  A2  A3      B1  B2  B3
 # Simple development deployment
 ./fem-broker --listen :8443 &
 ./fem-coder --broker https://localhost:8443 --agent dev-agent &
+```
+
+### MCP Federation Development Setup
+
+```bash
+# Start broker with MCP registry (when implemented)
+./fem-broker --listen :8443 --mcp-registry-enabled &
+
+# Start agents with MCP servers on different ports
+./fem-coder --broker https://localhost:8443 --agent calculator-agent --mcp-port 8080 &
+./fem-coder --broker https://localhost:8443 --agent analyzer-agent --mcp-port 8081 &
+
+# Test tool discovery
+curl -k -X POST https://localhost:8443/fep \
+  -H "Content-Type: application/json" \
+  -d '{
+    "type": "discoverTools",
+    "agent": "test-client",
+    "ts": '$(date +%s%3N)',
+    "nonce": "test-'$(date +%s)'",
+    "body": {
+      "query": {"capabilities": ["math.*"], "maxResults": 10},
+      "requestId": "test-discovery"
+    }
+  }'
+
+# Test direct MCP tool call
+curl -X POST http://localhost:8080/tools/call \
+  -H "Content-Type: application/json" \
+  -d '{"name": "math.add", "arguments": {"a": 5, "b": 3}}'
 ```
 
 ### Production Single Node
@@ -130,7 +180,9 @@ ExecStart=/usr/local/bin/fem-broker \
   --listen :8443 \
   --cert /etc/fem/broker.crt \
   --key /etc/fem/broker.key \
-  --log-level info
+  --log-level info \
+  --mcp-registry-enabled \
+  --mcp-discovery-timeout 30s
 Restart=always
 RestartSec=5s
 LimitNOFILE=1048576
@@ -251,6 +303,128 @@ dig SRV _fem._tcp.brokers.example.com
 # broker-c.example.com. 0 0 8443
 ```
 
+### Cross-Organization MCP Federation
+
+#### Organization A (Hospital) Configuration
+
+```yaml
+# hospital-a-broker.yaml
+listen: ":8443"
+cert: "/etc/ssl/certs/hospital-a.crt"
+key: "/etc/ssl/private/hospital-a.key"
+mcp:
+  registry_enabled: true
+  tool_sharing:
+    external_access: "restricted"
+    allowed_capabilities:
+      - "data.aggregate"    # Can share aggregated data
+      - "analysis.statistical"  # Can share analysis tools
+    denied_capabilities:
+      - "data.raw"          # Never share raw patient data
+federation:
+  mode: "cross-org"
+  peers:
+    - name: "hospital-b"
+      endpoint: "https://hospital-b.medical.network:8443"
+      trust_policy: "verified"
+      tool_access: "mutual"
+security:
+  mcp_tool_policies:
+    - pattern: "patient.*"
+      access: "internal-only"
+    - pattern: "analysis.*"
+      access: "federated"
+```
+
+#### Organization B (Hospital) Configuration
+
+```yaml
+# hospital-b-broker.yaml
+listen: ":8443"
+cert: "/etc/ssl/certs/hospital-b.crt"
+key: "/etc/ssl/private/hospital-b.key"
+mcp:
+  registry_enabled: true
+  tool_sharing:
+    external_access: "restricted"
+    allowed_capabilities:
+      - "ml.training"       # Can share ML training
+      - "model.inference"   # Can share model inference
+    denied_capabilities:
+      - "data.raw"          # Never share raw data
+federation:
+  mode: "cross-org"
+  peers:
+    - name: "hospital-a"
+      endpoint: "https://hospital-a.medical.network:8443"
+      trust_policy: "verified"
+      tool_access: "mutual"
+security:
+  mcp_tool_policies:
+    - pattern: "patient.*"
+      access: "internal-only"
+    - pattern: "ml.*"
+      access: "federated"
+```
+
+#### Cross-Org Agent Example
+
+```bash
+# Hospital A: Data analysis agent
+./fem-coder \
+  --broker https://hospital-a.medical.network:8443 \
+  --agent hospital-a-analyzer \
+  --mcp-port 8080 \
+  --mcp-tools "data.aggregate,analysis.statistical" \
+  --embodiment-policy /etc/fem/hospital-embodiment.json
+
+# Hospital B: ML training agent  
+./fem-coder \
+  --broker https://hospital-b.medical.network:8443 \
+  --agent hospital-b-ml \
+  --mcp-port 8080 \
+  --mcp-tools "ml.training,model.inference" \
+  --embodiment-policy /etc/fem/hospital-embodiment.json
+```
+
+#### Embodiment Policy Example
+
+```json
+{
+  "name": "hospital-embodiment-policy",
+  "environments": {
+    "secure-clinical": {
+      "description": "Secure clinical environment with patient data access",
+      "constraints": {
+        "data_locality": "required",
+        "encryption": "required",
+        "audit_logging": "required"
+      },
+      "allowed_tools": [
+        "data.aggregate",
+        "analysis.statistical"
+      ],
+      "denied_tools": [
+        "data.export",
+        "data.raw"
+      ]
+    },
+    "research-network": {
+      "description": "Research collaboration environment",
+      "constraints": {
+        "data_anonymization": "required",
+        "result_sharing": "allowed"
+      },
+      "allowed_tools": [
+        "ml.training",
+        "model.inference",
+        "analysis.aggregate"
+      ]
+    }
+  }
+}
+```
+
 ## Container Orchestration
 
 ### Docker Compose
@@ -268,6 +442,9 @@ services:
       - FEM_LISTEN=:8443
       - FEM_TLS_CERT=/certs/broker.crt
       - FEM_TLS_KEY=/certs/broker.key
+      - FEM_MCP_REGISTRY_ENABLED=true
+      - FEM_MCP_DISCOVERY_TIMEOUT=30s
+      - FEM_MCP_TOOL_INDEX_SIZE=10000
     volumes:
       - ./certs:/certs:ro
       - broker-data:/var/lib/fem
@@ -285,6 +462,9 @@ services:
     environment:
       - FEM_BROKER_URL=https://fem-broker:8443
       - FEM_AGENT_ID=coder-001
+      - FEM_MCP_PORT=8080
+      - FEM_MCP_TOOLS=code.execute,shell.run,math.add,math.multiply
+      - FEM_ENVIRONMENT_TYPE=container
     depends_on:
       - fem-broker
     networks:
@@ -292,6 +472,22 @@ services:
     restart: unless-stopped
     deploy:
       replicas: 3
+
+  fem-analyzer:
+    image: fem-coder:latest
+    environment:
+      - FEM_BROKER_URL=https://fem-broker:8443
+      - FEM_AGENT_ID=analyzer-001
+      - FEM_MCP_PORT=8081
+      - FEM_MCP_TOOLS=data.analyze,data.visualize,file.read
+      - FEM_ENVIRONMENT_TYPE=container
+    depends_on:
+      - fem-broker
+    networks:
+      - fem-network
+    restart: unless-stopped
+    deploy:
+      replicas: 2
 
 volumes:
   broker-data:
