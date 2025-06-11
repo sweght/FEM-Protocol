@@ -1,12 +1,20 @@
 # Attribution & Upstream Dependencies
 *Federated Embodiment Mesh (FEM) Suite — v0.1.3*
 
-**Author & Publisher**: Chaz Dinkle  
-**Protocol Design**: Federated Embodiment Protocol (FEP)  
-**Framework Implementation**: Federated Embodied Mesh (FEM)  
-**License**: Apache 2.0 (code) / CC-BY-SA 4.0 (documentation)  
+## Authors
 
-This framework builds on a number of open standards and open-source projects. Below is a non-exhaustive list of protocols, libraries, and prior art that influenced or are directly incorporated into FEM/FEP by Chaz Dinkle.
+**Chaz Dinkle** - *Creator, Protocol Designer, and Lead Developer*
+- Federated Embodiment Protocol (FEP) specification
+- Federated Embodied Mesh (FEM) framework implementation  
+- Core architecture and cryptographic security design
+- Cross-platform build and release automation
+
+## License
+
+- **Code**: Apache 2.0 ([LICENSE-CODE](../LICENSE-CODE))
+- **Documentation**: CC-BY-SA 4.0 ([LICENSE-DOCS](../LICENSE-DOCS))
+
+This framework builds on a number of open standards and open-source projects. Below is a non-exhaustive list of protocols, libraries, and prior art that influenced or are directly incorporated into FEM/FEP.
 
 | Component / Spec | Upstream Project | License | Where Used |
 |------------------|-----------------|---------|------------|

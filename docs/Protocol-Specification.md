@@ -1,9 +1,5 @@
 # Federated Embodiment Protocol (FEP) Specification
 
-**Author**: Chaz Dinkle  
-**Version**: 0.1.3  
-**License**: CC-BY-SA 4.0
-
 ## Table of Contents
 - [Overview](#overview)
 - [Protocol Fundamentals](#protocol-fundamentals)

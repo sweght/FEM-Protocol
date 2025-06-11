@@ -1,7 +1,5 @@
 # FEM Framework Architecture
 
-**Framework by Chaz Dinkle**
-
 The Federated Embodied Mesh (FEM) framework implements the Federated Embodiment Protocol (FEP) to create a secure, distributed network of autonomous AI agents.
 
 ## Table of Contents

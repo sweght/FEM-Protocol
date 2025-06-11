@@ -1,7 +1,5 @@
 # Security Guide
 
-**FEP-FEM Security by Chaz Dinkle**
-
 FEP-FEM implements defense-in-depth security with cryptographic guarantees, sandboxed execution, and capability-based authorization.
 
 ## Table of Contents

@@ -1,7 +1,5 @@
 # Agent Development Guide
 
-**FEP-FEM Agent Development by Chaz Dinkle**
-
 Build custom FEP agents that integrate seamlessly with the FEM network.
 
 ## Table of Contents

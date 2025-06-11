@@ -1,7 +1,5 @@
 # Quick Start Guide
 
-**FEP-FEM by Chaz Dinkle**
-
 Get up and running with FEP-FEM in minutes.
 
 ## Prerequisites
