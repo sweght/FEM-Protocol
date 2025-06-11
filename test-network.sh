@@ -3,12 +3,17 @@
 # Test script for FEM network functionality
 set -e
 
+# Determine repository root relative to this script so it can run from any
+# location. Fallback to the script directory if git is unavailable.
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+REPO_ROOT="$(git -C "$SCRIPT_DIR" rev-parse --show-toplevel 2>/dev/null || echo "$SCRIPT_DIR")"
+cd "$REPO_ROOT"
+
 echo "🚀 Testing FEM Network Implementation"
 echo "======================================"
 
 # Build components
 echo "📦 Building components..."
-cd /Users/slowbro/Workspaces/Sandbox/FEP-FEM-full
 
 # Build broker
 echo "  Building broker..."
