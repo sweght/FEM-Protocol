@@ -122,6 +122,26 @@ curl -X POST http://localhost:3002/mcp \
   -d '{"method": "tools/call", "params": {"name": "data.csv", "arguments": {"file": "sales.csv"}}}'
 ```
 
+## 🛠️ Building From Source
+
+Clone the repository and compile the components yourself:
+
+```bash
+git clone https://github.com/chazmaniandinkle/FEP-FEM.git
+cd FEP-FEM
+
+# Build everything
+make build
+
+# Or build individually
+cd broker && go build . && cd ..
+cd router && go build ./cmd/fem-router && cd ..
+cd bodies/coder && go build ./cmd/fem-coder && cd ../..
+
+# Generate development certificates
+make gen-certs
+```
+
 ## 🔑 Key Concepts
 
 ### Agents as MCP Federators
