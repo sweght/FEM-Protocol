@@ -5,6 +5,12 @@
 
 set -e
 
+# Determine repository root relative to this script so it can run from any
+# location. Fallback to the script directory if git is unavailable.
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+REPO_ROOT="$(git -C "$SCRIPT_DIR" rev-parse --show-toplevel 2>/dev/null || echo "$SCRIPT_DIR")"
+cd "$REPO_ROOT"
+
 echo "🌟 FEM Network Demonstration"
 echo "============================"
 echo "This demo shows a complete FEP/FEM network with:"
@@ -16,7 +22,6 @@ echo ""
 
 # Build components
 echo "📦 Building FEM components..."
-cd /Users/slowbro/Workspaces/Sandbox/FEP-FEM-full
 
 # Build broker
 echo "  • fem-broker (FEP message broker)"
