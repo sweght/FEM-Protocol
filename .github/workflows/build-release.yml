@@ -144,6 +144,26 @@ jobs:
         find artifacts -name "*.tar.gz" -o -name "*.zip" | xargs -I {} cp {} release-assets/
         ls -la release-assets/
     
+    - name: Extract changelog entry
+      run: |
+        # Extract changelog entry for this version
+        VERSION="${{ steps.version.outputs.VERSION }}"
+        if [ -f "CHANGELOG.md" ]; then
+          awk -v version="$VERSION" '
+            /^## \[/ { 
+              if ($0 ~ "\\[" version "\\]") { 
+                found=1; next 
+              } else if (found) { 
+                exit 
+              } 
+            }
+            found && /^## \[/ { exit }
+            found { print }
+          ' CHANGELOG.md > changelog-entry.md
+        else
+          echo "No changelog entry found for $VERSION" > changelog-entry.md
+        fi
+
     - name: Generate release notes
       run: |
         cat > release-notes.md << 'EOF'
@@ -169,6 +189,19 @@ jobs:
         2. Extract the binaries
         3. Run `./fem-broker --listen :8443` to start a broker
         4. Run `./fem-coder --broker https://localhost:8443 --agent my-agent` to connect an agent
+        
+        ## Changes in This Release
+        
+        EOF
+        
+        # Add changelog entry if available
+        if [ -s "changelog-entry.md" ]; then
+          cat changelog-entry.md >> release-notes.md
+        else
+          echo "See [CHANGELOG.md](https://github.com/chazmaniandinkle/FEP-FEM/blob/main/CHANGELOG.md) for details." >> release-notes.md
+        fi
+        
+        cat >> release-notes.md << 'EOF'
         
         ## Documentation
         
