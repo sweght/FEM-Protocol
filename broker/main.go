@@ -24,9 +24,10 @@ import (
 
 // Broker represents the FEM broker server
 type Broker struct {
-	agents    map[string]*Agent
-	mu        sync.RWMutex
-	tlsConfig *tls.Config
+	agents      map[string]*Agent
+	mu          sync.RWMutex
+	tlsConfig   *tls.Config
+	mcpRegistry *MCPRegistry
 }
 
 // Agent represents a registered agent
@@ -69,7 +70,8 @@ func main() {
 // NewBroker creates a new broker instance
 func NewBroker() *Broker {
 	return &Broker{
-		agents: make(map[string]*Agent),
+		agents:      make(map[string]*Agent),
+		mcpRegistry: NewMCPRegistry(),
 	}
 }
 
@@ -121,6 +123,11 @@ func (b *Broker) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		b.handleToolResult(w, envelope)
 	case protocol.EnvelopeRevoke:
 		b.handleRevoke(w, envelope)
+	// MCP Integration envelope types
+	case protocol.EnvelopeDiscoverTools:
+		b.handleDiscoverTools(w, envelope)
+	case protocol.EnvelopeEmbodimentUpdate:
+		b.handleEmbodimentUpdate(w, envelope)
 	default:
 		http.Error(w, "Unknown envelope type", http.StatusBadRequest)
 		return
@@ -129,24 +136,44 @@ func (b *Broker) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 // handleRegisterAgent processes agent registration
 func (b *Broker) handleRegisterAgent(w http.ResponseWriter, env *protocol.GenericEnvelope) {
-	var body struct {
-		Capabilities []string `json:"capabilities"`
-		Endpoint     string   `json:"endpoint"`
-	}
+	var body protocol.RegisterAgentBody
 
 	if err := env.GetBodyAs(&body); err != nil {
 		http.Error(w, "Invalid body", http.StatusBadRequest)
 		return
 	}
 
+	// Existing agent registration
 	b.mu.Lock()
 	b.agents[env.Agent] = &Agent{
 		ID:           env.Agent,
 		Capabilities: body.Capabilities,
-		Endpoint:     body.Endpoint,
+		Endpoint:     body.MCPEndpoint, // Use MCP endpoint if provided, fallback handled below
 		RegisteredAt: time.Now(),
 	}
 	b.mu.Unlock()
+
+	// New MCP registration if MCP endpoint provided
+	if body.MCPEndpoint != "" {
+		mcpAgent := &MCPAgent{
+			ID:              env.Agent,
+			MCPEndpoint:     body.MCPEndpoint,
+			BodyDefinition:  body.BodyDefinition,
+			EnvironmentType: body.EnvironmentType,
+			LastHeartbeat:   time.Now(),
+		}
+
+		// Extract MCP tools from body definition
+		if body.BodyDefinition != nil {
+			mcpAgent.Tools = body.BodyDefinition.MCPTools
+		}
+
+		if err := b.mcpRegistry.RegisterAgent(env.Agent, mcpAgent); err != nil {
+			log.Printf("Failed to register MCP agent: %v", err)
+		} else {
+			log.Printf("Registered MCP agent %s with endpoint %s", env.Agent, body.MCPEndpoint)
+		}
+	}
 
 	log.Printf("Registered agent %s with capabilities %v", env.Agent, body.Capabilities)
 
@@ -297,6 +324,69 @@ func (b *Broker) handleRevoke(w http.ResponseWriter, env *protocol.GenericEnvelo
 	response := map[string]interface{}{
 		"status": "revoked",
 		"target": body.Target,
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(response)
+}
+
+// handleDiscoverTools processes MCP tool discovery requests
+func (b *Broker) handleDiscoverTools(w http.ResponseWriter, env *protocol.GenericEnvelope) {
+	var discoverBody protocol.DiscoverToolsBody
+	if err := env.GetBodyAs(&discoverBody); err != nil {
+		http.Error(w, "Invalid discovery request", http.StatusBadRequest)
+		return
+	}
+
+	log.Printf("Tool discovery request from %s: %+v", env.Agent, discoverBody.Query)
+
+	discoveredTools, err := b.mcpRegistry.DiscoverTools(discoverBody.Query)
+	if err != nil {
+		http.Error(w, "Discovery failed", http.StatusInternalServerError)
+		return
+	}
+
+	log.Printf("Found %d tools matching query", len(discoveredTools))
+
+	response := map[string]interface{}{
+		"status":       "success",
+		"requestId":    discoverBody.RequestID,
+		"tools":        discoveredTools,
+		"totalResults": len(discoveredTools),
+		"hasMore":      false,
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(response)
+}
+
+// handleEmbodimentUpdate processes agent embodiment changes
+func (b *Broker) handleEmbodimentUpdate(w http.ResponseWriter, env *protocol.GenericEnvelope) {
+	var updateBody protocol.EmbodimentUpdateBody
+	if err := env.GetBodyAs(&updateBody); err != nil {
+		http.Error(w, "Invalid embodiment update", http.StatusBadRequest)
+		return
+	}
+
+	log.Printf("Embodiment update from %s: environment=%s", env.Agent, updateBody.EnvironmentType)
+
+	// Update MCP registry with new embodiment
+	if agent, exists := b.mcpRegistry.GetAgent(env.Agent); exists {
+		agent.EnvironmentType = updateBody.EnvironmentType
+		agent.BodyDefinition = &updateBody.BodyDefinition
+		agent.MCPEndpoint = updateBody.MCPEndpoint
+		agent.Tools = updateBody.BodyDefinition.MCPTools
+		agent.LastHeartbeat = time.Now()
+
+		// Re-register to update tool index
+		b.mcpRegistry.RegisterAgent(env.Agent, agent)
+
+		log.Printf("Updated embodiment for agent %s", env.Agent)
+	}
+
+	response := map[string]interface{}{
+		"status": "updated",
+		"agent":  env.Agent,
 	}
 
 	w.Header().Set("Content-Type", "application/json")
