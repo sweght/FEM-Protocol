@@ -83,6 +83,12 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for development setup, code style, and su
 
 ## License & Attribution
 
-This project is licensed under [CC-BY-SA 4.0](LICENSE-DOCS). See [Attribution](docs/Attribution.md) for upstream dependencies and credits.
+This project is licensed under [Apache 2.0](LICENSE-CODE) for code and [CC-BY-SA 4.0](LICENSE-DOCS) for documentation. 
 
-© 2025 FEM Authors — CC-BY-SA 4.0
+**Author & Publisher**: Chaz Dinkle  
+**Protocol Design**: Federated Embodiment Protocol (FEP)  
+**Framework Implementation**: Federated Embodied Mesh (FEM)  
+
+See [Attribution](docs/Attribution.md) for upstream dependencies and credits.
+
+© 2025 Chaz Dinkle — Apache 2.0 (code) / CC-BY-SA 4.0 (documentation)
