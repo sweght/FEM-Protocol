@@ -19,6 +19,10 @@ const (
 	EnvelopeToolCall           EnvelopeType = "toolCall"
 	EnvelopeToolResult         EnvelopeType = "toolResult"
 	EnvelopeRevoke             EnvelopeType = "revoke"
+	// MCP Integration envelope types
+	EnvelopeDiscoverTools      EnvelopeType = "discoverTools"
+	EnvelopeToolsDiscovered    EnvelopeType = "toolsDiscovered"
+	EnvelopeEmbodimentUpdate   EnvelopeType = "embodimentUpdate"
 )
 
 // CommonHeaders contains headers present in all FEP envelopes
@@ -42,9 +46,13 @@ type RegisterAgentEnvelope struct {
 }
 
 type RegisterAgentBody struct {
-	PubKey       string   `json:"pubkey"`        // Base64 Ed25519 public key
-	Capabilities []string `json:"capabilities"`  // List of capabilities
-	Metadata     map[string]interface{} `json:"metadata,omitempty"`
+	PubKey          string                 `json:"pubkey"`                   // Base64 Ed25519 public key
+	Capabilities    []string               `json:"capabilities"`             // List of capabilities
+	Metadata        map[string]interface{} `json:"metadata,omitempty"`
+	// MCP integration fields
+	MCPEndpoint     string                 `json:"mcpEndpoint,omitempty"`    // HTTP URL for MCP server
+	BodyDefinition  *BodyDefinition        `json:"bodyDefinition,omitempty"` // Environment-specific tool definitions
+	EnvironmentType string                 `json:"environmentType,omitempty"`// Environment type (e.g., "local", "cloud")
 }
 
 // RegisterBrokerEnvelope registers a broker node
@@ -118,6 +126,82 @@ type RevokeBody struct {
 	Reason string `json:"reason,omitempty"`
 }
 
+// MCP Integration envelope types
+
+// DiscoverToolsEnvelope requests MCP tool discovery
+type DiscoverToolsEnvelope struct {
+	BaseEnvelope
+	Body DiscoverToolsBody `json:"body"`
+}
+
+type DiscoverToolsBody struct {
+	Query     ToolQuery `json:"query"`
+	RequestID string    `json:"requestId"`
+}
+
+type ToolQuery struct {
+	Capabilities    []string `json:"capabilities"`
+	EnvironmentType string   `json:"environmentType,omitempty"`
+	MaxResults      int      `json:"maxResults,omitempty"`
+	IncludeMetadata bool     `json:"includeMetadata,omitempty"`
+}
+
+// ToolsDiscoveredEnvelope returns discovered MCP tools
+type ToolsDiscoveredEnvelope struct {
+	BaseEnvelope
+	Body ToolsDiscoveredBody `json:"body"`
+}
+
+type ToolsDiscoveredBody struct {
+	RequestID    string           `json:"requestId"`
+	Tools        []DiscoveredTool `json:"tools"`
+	TotalResults int              `json:"totalResults"`
+	HasMore      bool             `json:"hasMore"`
+}
+
+type DiscoveredTool struct {
+	AgentID         string       `json:"agentId"`
+	MCPEndpoint     string       `json:"mcpEndpoint"`
+	Capabilities    []string     `json:"capabilities"`
+	EnvironmentType string       `json:"environmentType"`
+	MCPTools        []MCPTool    `json:"mcpTools"`
+	Metadata        ToolMetadata `json:"metadata,omitempty"`
+}
+
+type MCPTool struct {
+	Name        string                 `json:"name"`
+	Description string                 `json:"description"`
+	InputSchema map[string]interface{} `json:"inputSchema"`
+}
+
+type ToolMetadata struct {
+	LastSeen            int64   `json:"lastSeen"`
+	AverageResponseTime int     `json:"averageResponseTime"`
+	TrustScore          float64 `json:"trustScore"`
+}
+
+// EmbodimentUpdateEnvelope notifies of environment changes
+type EmbodimentUpdateEnvelope struct {
+	BaseEnvelope
+	Body EmbodimentUpdateBody `json:"body"`
+}
+
+type EmbodimentUpdateBody struct {
+	EnvironmentType string         `json:"environmentType"`
+	BodyDefinition  BodyDefinition `json:"bodyDefinition"`
+	MCPEndpoint     string         `json:"mcpEndpoint"`
+	UpdatedTools    []string       `json:"updatedTools"`
+}
+
+type BodyDefinition struct {
+	Name         string                 `json:"name"`
+	Environment  string                 `json:"environment"`
+	Capabilities []string               `json:"capabilities"`
+	MCPTools     []MCPTool             `json:"mcpTools"`
+	Constraints  map[string]interface{} `json:"constraints,omitempty"`
+	Metadata     map[string]interface{} `json:"metadata,omitempty"`
+}
+
 // Envelope is a generic envelope that can hold any envelope type
 type Envelope struct {
 	Type EnvelopeType `json:"type"`
@@ -184,6 +268,41 @@ func (e *ToolCallEnvelope) Sign(privateKey ed25519.PrivateKey) error {
 }
 
 func (e *ToolResultEnvelope) Sign(privateKey ed25519.PrivateKey) error {
+	e.Sig = ""
+	data, err := json.Marshal(e)
+	if err != nil {
+		return err
+	}
+	signature := ed25519.Sign(privateKey, data)
+	e.Sig = base64.StdEncoding.EncodeToString(signature)
+	return nil
+}
+
+// MCP Integration envelope signing methods
+
+func (e *DiscoverToolsEnvelope) Sign(privateKey ed25519.PrivateKey) error {
+	e.Sig = ""
+	data, err := json.Marshal(e)
+	if err != nil {
+		return err
+	}
+	signature := ed25519.Sign(privateKey, data)
+	e.Sig = base64.StdEncoding.EncodeToString(signature)
+	return nil
+}
+
+func (e *ToolsDiscoveredEnvelope) Sign(privateKey ed25519.PrivateKey) error {
+	e.Sig = ""
+	data, err := json.Marshal(e)
+	if err != nil {
+		return err
+	}
+	signature := ed25519.Sign(privateKey, data)
+	e.Sig = base64.StdEncoding.EncodeToString(signature)
+	return nil
+}
+
+func (e *EmbodimentUpdateEnvelope) Sign(privateKey ed25519.PrivateKey) error {
 	e.Sig = ""
 	data, err := json.Marshal(e)
 	if err != nil {
