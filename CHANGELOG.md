@@ -7,13 +7,38 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-### Added
-- Comprehensive protocol documentation and guides
-- Changelog for tracking project evolution
+## [0.3.0] - 2025-06-11
 
-### Changed
-- Updated README to reflect production-ready status
-- Removed outdated references to integration testing phase
+### Added - MCP Federation Complete 🚀
+- **Complete MCP Integration**: Agents now expose tools via standard MCP protocol
+- **Tool Discovery System**: Broker-level MCP tool registry with pattern matching
+- **Federation Capabilities**: Cross-agent tool discovery and calling
+- **Embodiment Framework**: Environment-specific tool adaptation with body definitions
+- **New Protocol Envelopes**: `discoverTools`, `toolsDiscovered`, `embodimentUpdate`
+- **MCP Server Integration**: Agents expose tools via HTTP JSON-RPC endpoints
+- **Demo Implementation**: Working `demo-mcp-federation.sh` script
+- **Integration Tests**: Complete test suite validating full federation loop
+
+### Enhanced
+- **Protocol Extension**: Extended from 7 to 10 envelope types
+- **Agent Capabilities**: fem-coder now includes MCP server with `--mcp-port` flag
+- **Broker Functionality**: Full MCP tool registry with advanced discovery
+- **Documentation**: Streamlined roadmap and updated quick start guides
+
+### Technical Implementation
+- **Thread-Safe Registry**: Concurrent MCP tool indexing and discovery
+- **Pattern Matching**: Wildcard tool discovery (e.g., "math.*", "file.*")
+- **Environment Adaptation**: Dynamic tool sets based on deployment context
+- **Cryptographic Security**: All MCP federation secured with Ed25519 signatures
+
+### Breaking Changes
+- **Agent Registration**: Now includes optional MCP endpoint and body definition
+- **Protocol Compatibility**: Maintains backward compatibility with v0.1.x agents
+
+### Documentation
+- **Implementation Roadmap**: All phases A-I marked complete with streamlined format
+- **Quick Start Guide**: Updated with working demo and manual testing examples
+- **API Examples**: Real curl commands that work with current implementation
 
 ## [0.1.3] - 2025-06-11
 
@@ -80,11 +105,15 @@ This project uses automated releases triggered by version tags:
 
 ## Version History Summary
 
+- **v0.3.0**: 🚀 Complete MCP federation implementation
+- **v0.2.0**: Previous release
 - **v0.1.3**: Production automation and releases
 - **v0.1.2-v0.1.1**: Build system fixes  
 - **v0.1.0**: Initial complete implementation
 
-[Unreleased]: https://github.com/chazmaniandinkle/FEP-FEM/compare/v0.1.3...HEAD
+[Unreleased]: https://github.com/chazmaniandinkle/FEP-FEM/compare/v0.3.0...HEAD
+[0.3.0]: https://github.com/chazmaniandinkle/FEP-FEM/compare/v0.2.0...v0.3.0
+[0.2.0]: https://github.com/chazmaniandinkle/FEP-FEM/compare/v0.1.3...v0.2.0
 [0.1.3]: https://github.com/chazmaniandinkle/FEP-FEM/compare/v0.1.2...v0.1.3
 [0.1.2]: https://github.com/chazmaniandinkle/FEP-FEM/compare/v0.1.1...v0.1.2
 [0.1.1]: https://github.com/chazmaniandinkle/FEP-FEM/compare/v0.1.0...v0.1.1
