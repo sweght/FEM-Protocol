@@ -1,352 +1,262 @@
-# FEP-FEM Ontology: Formal Definitions
+# FEM Protocol Ontology: Secure Hosted Embodiment
 
-This document provides precise definitions for the core concepts in the Federated Embodiment Protocol (FEP) and Federated Embodied Mesh (FEM) framework, establishing the formal ontology that underpins the entire system.
+This document provides precise definitions for the core concepts in the **FEM Protocol**, establishing the formal ontology that underpins **Secure Hosted Embodiment** and **Secure Delegated Control**.
 
 ## Table of Contents
 - [Core Concepts](#core-concepts)
-- [Agent Architecture](#agent-architecture)
-- [MCP Integration](#mcp-integration)
-- [Environment and Embodiment](#environment-and-embodiment)
+- [Embodiment Architecture](#embodiment-architecture)
+- [Security and Trust Model](#security-and-trust-model)
+- [Session Management](#session-management)
 - [Federation Model](#federation-model)
-- [Security and Access Control](#security-and-access-control)
 - [Formal Relationships](#formal-relationships)
 
 ## Core Concepts
 
-### Mind
-**Definition**: The autonomous, persistent identity and decision-making logic of an agent.
+### Host
+**Definition**: An agent that offers "bodies" (sandboxed capability sets) for guest embodiment, while retaining ultimate control over its environment.
 
 **Properties**:
-- **Identity**: Cryptographically verifiable Ed25519 key pair
-- **Autonomy**: Capable of independent decision-making and action
-- **Persistence**: Maintains state and memory across embodiments
-- **Logic**: Core reasoning and processing capabilities
+- **Environment Control**: Maintains sovereignty over its computational environment
+- **Body Definitions**: Defines and offers specific capability sets for guest use
+- **Security Policies**: Establishes boundaries and constraints for guest behavior
+- **Session Management**: Grants, monitors, and terminates embodiment sessions
 
-**Implementation**: A FEM agent's core logic, including its AI model, decision trees, and persistent state management.
+**Implementation**: A FEM agent running both an MCP server (exposing tools) and embodiment management logic that can securely host guest agents.
 
-**Example**: A data analysis agent's core reasoning capabilities that remain consistent whether it's embodied in a local environment, cloud environment, or edge device.
+**Example**: A developer's laptop offering a "developer-workstation" body with file operations and shell access to mobile agents.
+
+### Guest
+**Definition**: An agent "mind" that can discover and inhabit bodies offered by hosts, exercising delegated control within host-defined boundaries.
+
+**Properties**:
+- **Discovery Capability**: Can search for and evaluate available bodies
+- **Embodiment Client**: Can request and establish embodiment sessions
+- **Delegated Action**: Exercises control through host-provided tools
+- **Boundary Respect**: Operates within host-imposed security constraints
+
+**Implementation**: A FEM agent with MCP client capabilities and embodiment session management.
+
+**Example**: A mobile chat agent that discovers and inhabits laptop development environments for code execution.
 
 ### Body
-**Definition**: The collection of tools, capabilities, and interfaces that an agent can use to interact with its environment.
+**Definition**: A secure, sandboxed set of MCP tools and capabilities offered by a host for guest embodiment.
 
 **Properties**:
-- **Tool Collection**: Set of MCP tools available to the agent
-- **Capabilities**: Declared abilities (e.g., "file.read", "code.execute")
-- **Interfaces**: Communication endpoints and protocols
-- **Adaptability**: Can change based on environment
+- **Tool Collection**: Specific MCP tools available to embodied guests
+- **Security Boundaries**: Constraints on what guests can access and control
+- **Environment Specificity**: Adapted to the host's deployment context
+- **Session Support**: Manages multiple concurrent guest embodiments
 
-**Implementation**: MCP server exposing tools + MCP client for consuming tools from other agents.
+**Implementation**: A body definition with MCP tools, security policies, and session management configuration.
 
-**Example**: A file management agent might have bodies with tools like:
-- Local body: `file.read`, `file.write`, `dir.list`
-- Cloud body: `s3.get`, `s3.put`, `s3.list`
-- Browser body: `indexeddb.read`, `localstorage.write`
+**Example**: A "storyteller-coop" body offering narrative control tools: `update_world()`, `add_npc()`, `update_character()`.
+
+### Embodiment
+**Definition**: The process by which a guest mind inhabits a host body, establishing a persistent session with delegated control capabilities.
+
+**Properties**:
+- **Session-Based**: Time-bounded with clear start and end
+- **Permission-Constrained**: Guest actions limited by host-granted permissions
+- **Auditable**: All actions logged for security and debugging
+- **Revocable**: Host can terminate session for policy violations
+
+**Implementation**: Cryptographically secured session with token-based authentication and permission validation.
+
+**Example**: A 1-hour embodiment session where a phone agent controls laptop terminal access.
+
+### Secure Delegated Control
+**Definition**: The security model where hosts delegate specific control to guests within cryptographically enforced boundaries.
+
+**Properties**:
+- **Delegation**: Hosts explicitly grant control rather than guests taking it
+- **Boundaries**: Clear technical and policy constraints on guest actions
+- **Validation**: Every guest action validated against session permissions
+- **Revocation**: Control can be instantly revoked by hosts
+
+**Implementation**: Session tokens, permission lists, real-time validation, and audit logging.
+
+**Example**: Guest can call `shell.execute("git status")` but not `shell.execute("rm -rf /")` based on host security policy.
+
+## Embodiment Architecture
+
+### Mind
+**Definition**: The persistent identity, logic, and decision-making capabilities of an agent that remain consistent across different embodiments.
+
+**Properties**:
+- **Identity**: Cryptographically verifiable Ed25519 identity
+- **Logic**: Core reasoning and processing capabilities
+- **Memory**: Persistent state that survives embodiment changes
+- **Adaptation**: Can work effectively across different body types
+
+**Implementation**: The agent's core AI logic, identity management, and persistent storage.
+
+**Example**: A narrative AI's storytelling logic that works whether embodied in a game, virtual world, or chat system.
+
+### Broker-as-Agent
+**Definition**: The broker is not infrastructure but a first-class agent with its own mind, body, and environment.
+
+**Properties**:
+- **Broker's Mind**: Federation logic, security policies, health monitoring
+- **Broker's Body**: Network-level tools for embodiment management
+- **Broker's Environment**: Production vs development embodiment policies
+- **Agent Capabilities**: Can embody different operational modes
+
+**Implementation**: Broker runs as a full FEM agent with MCP tools for network management.
+
+**Example**: A production broker embodying strict security tools vs a development broker embodying debugging tools.
 
 ### Environment
-**Definition**: The computational, regulatory, and resource context in which an agent operates.
+**Definition**: The computational, security, and resource context in which embodiment occurs.
 
 **Properties**:
 - **Computational Resources**: CPU, memory, storage, network capabilities
-- **Security Context**: Trust level, isolation requirements, access controls
-- **Regulatory Context**: Data residency, compliance requirements
-- **Network Topology**: Connectivity, latency, bandwidth characteristics
-- **Platform Constraints**: Operating system, runtime, available libraries
+- **Security Context**: Trust levels, isolation requirements, access controls
+- **Regulatory Context**: Compliance requirements, data residency, governance
+- **Network Topology**: Local, cloud, edge, federated configurations
 
-**Implementation**: Environment detection logic that influences which body definition an agent adopts.
+**Implementation**: Environment detection logic that influences body selection and tool configuration.
 
-**Examples**:
-- **Local Development**: High trust, full filesystem access, development tools
-- **Cloud Production**: Scalable resources, container isolation, service mesh
-- **Edge Device**: Limited resources, intermittent connectivity, local processing
-- **Browser Extension**: Sandboxed execution, DOM access, user interaction
-- **Mobile Application**: Touch interface, sensors, offline capabilities
+**Example**: Same agent offering different bodies in local development vs cloud production environments.
 
-### Embodiment
-**Definition**: The process by which a mind adapts its body to suit its environment, creating an embodied agent optimized for its operational context.
+## Security and Trust Model
+
+### Trust Level
+**Definition**: A hierarchical assessment of an agent's reliability and permitted access level.
+
+**Levels**:
+- **Unknown**: No prior interaction history
+- **Basic**: Limited successful interactions, restricted access
+- **Verified**: Significant positive history, standard access
+- **Trusted**: Long-term reliable behavior, elevated access
+- **Personal**: Personal devices and known entities, full access
+
+**Implementation**: Reputation tracking based on session completion rates, policy compliance, and host feedback.
+
+**Example**: A "basic" trust guest limited to read-only operations, while "trusted" guests can execute write operations.
+
+### Security Policy
+**Definition**: Host-defined rules that govern guest behavior during embodiment sessions.
+
+**Components**:
+- **Path Restrictions**: Allowed and denied file system locations
+- **Command Filtering**: Permitted and forbidden shell commands
+- **Resource Limits**: CPU, memory, disk, and network constraints
+- **Time Boundaries**: Session duration and daily limits
+
+**Implementation**: Policy engine that validates every guest action against defined rules.
+
+**Example**: Guest limited to `/workspace/*` paths and denied `sudo` commands.
+
+### Session Token
+**Definition**: Cryptographically secure identifier for active embodiment sessions.
 
 **Properties**:
-- **Contextual Adaptation**: Tools and capabilities adjust to environment
-- **Resource Optimization**: Efficient use of available computational resources
-- **Compliance Alignment**: Respects environmental constraints and regulations
-- **Performance Tuning**: Optimizes for environment-specific performance characteristics
+- **Cryptographic Security**: 256-bit entropy, tamper-evident
+- **Session Scope**: Unique per embodiment session
+- **Time-Bounded**: Expires with session termination
+- **Permission Binding**: Linked to specific guest permissions
 
-**Implementation**: Dynamic MCP tool registration based on environment detection and body definition templates.
+**Implementation**: JWT-style tokens with embedded permissions and expiration.
 
-**Example**: A universal assistant agent embodying differently:
-```
-Mind: Assistant Logic
-├── Local Embodiment → Body: [file.system, shell.exec, app.launch]
-├── Cloud Embodiment → Body: [api.call, db.query, scale.compute]
-├── Mobile Embodiment → Body: [camera.capture, gps.location, contacts.access]
-└── Browser Embodiment → Body: [dom.query, storage.local, history.search]
-```
+**Example**: `sess-abc123-def456` grants specific guest access to specific host body for defined duration.
 
-### Agent
-**Definition**: The complete entity consisting of a mind embodied within a specific environment, possessing a body of capabilities.
+## Session Management
 
-**Formula**: `Agent = Mind + Body + Environment`
+### Embodiment Session
+**Definition**: A time-bounded period during which a guest has active delegated control over a host body.
 
-**Properties**:
-- **Complete Functionality**: Capable of autonomous operation
-- **Environmental Specificity**: Optimized for its operational context
-- **Collaborative Ability**: Can interact with other agents through FEP
-- **Tool Federation**: Can expose and consume MCP tools across the network
+**Lifecycle**:
+1. **Discovery**: Guest finds suitable bodies
+2. **Request**: Guest requests embodiment access
+3. **Verification**: Host validates guest identity and policies
+4. **Grant**: Host establishes session with permissions
+5. **Active Control**: Guest exercises delegated control
+6. **Monitoring**: Continuous validation and audit logging
+7. **Termination**: Natural expiry or forced termination
 
-## Agent Architecture
+**Implementation**: State machine with transition validation and audit logging.
 
-### Mind-Body-Environment Relationship
+### Session Monitoring
+**Definition**: Continuous oversight of embodiment sessions to ensure policy compliance and detect violations.
 
-```
-┌─────────────────────────────────────────────────────────────┐
-│                        Environment                          │
-│  ┌─────────────────────────────────────────────────────┐   │
-│  │                     Agent                           │   │
-│  │  ┌─────────────┐         ┌─────────────────────┐   │   │
-│  │  │    Mind     │◄───────►│        Body         │   │   │
-│  │  │             │         │                     │   │   │
-│  │  │ - Identity  │         │ - MCP Server        │   │   │
-│  │  │ - Logic     │         │ - MCP Client        │   │   │
-│  │  │ - Memory    │         │ - Tool Collection   │   │   │
-│  │  │ - Decision  │         │ - Capabilities      │   │   │
-│  │  └─────────────┘         └─────────────────────┘   │   │
-│  └─────────────────────────────────────────────────────┘   │
-│                                                             │
-│  Environment Properties:                                    │
-│  - Resources (CPU, Memory, Storage)                         │
-│  - Security Context                                         │
-│  - Network Topology                                         │
-│  - Regulatory Constraints                                   │
-└─────────────────────────────────────────────────────────────┘
-```
+**Components**:
+- **Resource Tracking**: Monitor CPU, memory, disk usage
+- **Action Auditing**: Log all tool calls and results
+- **Violation Detection**: Identify policy breaches
+- **Health Checking**: Ensure session remains valid
 
-### Body Definition Template
-**Definition**: A specification that defines what MCP tools and capabilities an agent should expose when embodied in a specific environment type.
-
-**Structure**:
-```json
-{
-  "bodyId": "file-agent-local",
-  "environmentType": "local-development",
-  "description": "File management agent for local development environment",
-  "mcpTools": [
-    {
-      "name": "file.read",
-      "description": "Read file contents from local filesystem",
-      "inputSchema": { "type": "object", "properties": { "path": {"type": "string"} } }
-    },
-    {
-      "name": "file.write", 
-      "description": "Write content to local filesystem",
-      "inputSchema": { "type": "object", "properties": { "path": {"type": "string"}, "content": {"type": "string"} } }
-    }
-  ],
-  "capabilities": ["file.read", "file.write", "file.list"],
-  "securityPolicy": {
-    "allowedPaths": ["/tmp", "/home/user/workspace"],
-    "maxFileSize": "10MB"
-  },
-  "resourceLimits": {
-    "maxMemory": "512MB",
-    "maxConcurrentOperations": 5
-  }
-}
-```
-
-## MCP Integration
-
-### MCP-FEM Relationship
-**Principle**: FEM federates MCP tools rather than replacing them.
-
-**Integration Points**:
-1. **Tool Exposure**: Agents expose their capabilities as MCP servers
-2. **Tool Discovery**: Agents discover available tools through FEP protocol
-3. **Tool Consumption**: Agents use MCP client protocol to invoke remote tools
-4. **Federation**: FEP enables MCP tools to be shared across organizational boundaries
-
-### MCP Server (Tool Provider)
-**Definition**: An agent's interface for exposing its capabilities to other agents in the network.
-
-**Implementation**: Each embodied agent runs an MCP server that:
-- Registers tools based on current body definition
-- Handles tool invocation requests
-- Returns results via MCP protocol
-- Manages authentication and authorization
-
-### MCP Client (Tool Consumer)
-**Definition**: An agent's interface for discovering and using tools from other agents.
-
-**Implementation**: Agents use MCP clients to:
-- Discover available tools through FEP brokers
-- Invoke tools on remote agents via MCP protocol
-- Handle tool results and errors
-- Maintain connection pooling and retry logic
-
-### Tool Federation Flow
-1. **Registration**: Agent registers with broker, advertising MCP endpoint
-2. **Discovery**: Other agents query broker for available capabilities
-3. **Connection**: Agent connects to remote agent's MCP server
-4. **Invocation**: Tool called via standard MCP protocol
-5. **Result**: Response returned through MCP client
-
-## Environment and Embodiment
-
-### Environment Classification
-
-#### Computational Environments
-- **Local**: Direct hardware access, full privileges
-- **Container**: Isolated but efficient, shared kernel
-- **Serverless**: Stateless, event-driven, auto-scaling
-- **Edge**: Resource-constrained, intermittent connectivity
-- **Mobile**: Battery-conscious, sensor-rich, touch interface
-
-#### Security Environments  
-- **Trusted**: Full access, minimal sandboxing
-- **Semi-trusted**: Capability restrictions, monitored execution
-- **Untrusted**: Heavy sandboxing, strict resource limits
-- **Public**: Assume hostile environment, maximum isolation
-
-#### Regulatory Environments
-- **GDPR Zone**: EU data protection compliance required
-- **HIPAA**: Healthcare data protection requirements
-- **SOX**: Financial reporting compliance
-- **Classified**: Government security clearance levels
-
-### Embodiment Patterns
-
-#### Static Embodiment
-**Definition**: Agent body is determined at deployment time and remains fixed.
-
-**Use Case**: Production services with well-defined operational parameters.
-
-**Example**: Database agent deployed to cloud always has cloud-specific tools.
-
-#### Dynamic Embodiment  
-**Definition**: Agent adapts its body based on runtime environment detection.
-
-**Use Case**: Multi-environment deployment, edge-to-cloud migration.
-
-**Example**: Data processing agent that adapts tools based on available resources.
-
-#### Multi-Body Embodiment
-**Definition**: Single mind maintains multiple bodies simultaneously across different environments.
-
-**Use Case**: Cross-environment workflows, data synchronization.
-
-**Example**: Sync agent with local and cloud bodies keeping data consistent.
-
-#### Progressive Embodiment
-**Definition**: Agent gradually gains new capabilities as it proves trustworthiness.
-
-**Use Case**: Security-conscious environments, capability escalation.
-
-**Example**: New agent starts with read-only tools, gains write access over time.
+**Implementation**: Background monitoring threads with real-time policy validation.
 
 ## Federation Model
 
+### Cross-Broker Embodiment
+**Definition**: The ability for guests connected to one broker to discover and embody into hosts connected to different brokers.
+
+**Properties**:
+- **Discovery Federation**: Brokers share body availability information
+- **Session Routing**: Embodiment requests routed to appropriate brokers
+- **Security Propagation**: Trust and security policies honored across brokers
+- **Health Coordination**: Session health monitored across broker boundaries
+
+**Implementation**: Broker-to-broker federation protocol with shared session state.
+
 ### Network Topology
+**Definition**: The arrangement and connection patterns of brokers in the FEM network.
 
-#### Single Broker
-```
-    Broker
-   /   |   \
-  A1   A2   A3
-```
-**Use Case**: Small teams, single organization, development
+**Types**:
+- **Single Broker**: All agents connect to one broker
+- **Federated Mesh**: Multiple brokers with peer connections
+- **Hierarchical**: Tree structure with primary and secondary brokers
 
-#### Federated Brokers
-```
-Broker-A ←→ Broker-B
-   |           |
-  A1,A2      B1,B2
-```
-**Use Case**: Multi-organization, geographic distribution
-
-#### Mesh Federation
-```
-  Broker-A
-   /     \
-Broker-B—Broker-C
-   \     /
-  Broker-D
-```
-**Use Case**: High availability, redundancy, scale
-
-### Cross-Broker Agent Interaction
-1. **Discovery**: Agent queries local broker for capabilities
-2. **Federation Lookup**: Broker queries federated brokers
-3. **Routing**: Request routed to target broker
-4. **MCP Connection**: Direct MCP connection established
-5. **Tool Execution**: Standard MCP tool invocation
-
-## Security and Access Control
-
-### Identity and Authentication
-- **Agent Identity**: Ed25519 public key uniquely identifies each mind
-- **Broker Authentication**: Mutual TLS for broker-to-broker communication
-- **Message Integrity**: All FEP messages cryptographically signed
-
-### Capability-Based Security
-- **Declared Capabilities**: Agents explicitly declare what they can do
-- **Capability Verification**: Brokers enforce declared capabilities
-- **Least Privilege**: Agents only get minimum required capabilities
-- **Capability Revocation**: Capabilities can be dynamically revoked
-
-### Body-Level Security
-- **Environment Isolation**: Bodies cannot access unauthorized resources
-- **Tool Sandboxing**: Each MCP tool execution is isolated
-- **Resource Limits**: CPU, memory, storage, network limits enforced
-- **Audit Logging**: All tool executions logged for security analysis
-
-### Role-Based Access Control (RBAC)
-**Definition**: Body definitions can include role assignments that determine which agents can use which tools.
-
-**Implementation**:
-```json
-{
-  "bodyId": "database-admin",
-  "roles": ["dba", "data-admin"],
-  "mcpTools": [
-    {
-      "name": "db.backup",
-      "requiredRoles": ["dba"]
-    },
-    {
-      "name": "db.query", 
-      "requiredRoles": ["dba", "data-analyst"]
-    }
-  ]
-}
-```
+**Implementation**: Configurable connection patterns with automatic failover and load balancing.
 
 ## Formal Relationships
 
-### Composition Relationships
-- `Agent ⊇ Mind` (Agent contains Mind)
-- `Agent ⊇ Body` (Agent contains Body)  
-- `Agent ⊆ Environment` (Agent exists within Environment)
-- `Body ⊇ MCPTools` (Body contains MCP Tools)
-- `Environment ⊇ Resources` (Environment provides Resources)
+### Host-Guest Relationship
+```
+Host offers Bodies → Guest discovers Bodies → Guest requests Embodiment → 
+Host grants Session → Guest exercises Delegated Control → Host monitors Actions → 
+Host logs Audit → Session terminates
+```
 
-### Functional Relationships
-- `embodiment: Mind × Environment → Body` (Embodiment function)
-- `federation: Agent × Agent → Collaboration` (Federation enables collaboration)
-- `toolDiscovery: Agent × Network → AvailableTools` (Discovery function)
-- `toolInvocation: Agent × Tool × Parameters → Result` (Invocation function)
+### Mind-Body-Environment Relationship
+```
+Mind (persistent logic) + Body (capability set) + Environment (context) = Embodied Agent
+```
 
-### Temporal Relationships
-- `Mind` persists across embodiments
-- `Body` changes with environment
-- `Environment` evolves over time
-- `Agent = Mind(t) + Body(Environment(t)) + Environment(t)`
+### Security Enforcement Chain
+```
+Guest Action → Session Token Validation → Permission Check → Security Policy Validation → 
+Resource Limit Check → Action Execution → Audit Logging
+```
 
-### Cardinality Relationships
-- One Mind can have multiple Bodies (1:N)
-- One Body can exist in one Environment (1:1)
-- One Environment can host multiple Agents (1:N)
-- One Agent can use tools from multiple other Agents (N:N)
+### Trust Evolution
+```
+Unknown Guest → Basic Interactions → Successful Sessions → Policy Compliance → 
+Trust Level Increase → Enhanced Permissions → Reputation Building
+```
 
-## Conclusion
+### Federation Discovery Flow
+```
+Guest Query → Local Broker → Federated Brokers → Aggregate Results → 
+Rank by Suitability → Return to Guest → Cross-Broker Embodiment
+```
 
-This ontology establishes the formal conceptual foundation for FEP-FEM, clarifying how minds, bodies, and environments interact to create adaptive, federated AI agent networks. The integration with MCP provides a standards-based approach to tool federation, while the embodiment model enables agents to optimize their capabilities for their operational context.
+## Key Innovations
 
-The key insight is that FEM doesn't replace existing protocols like MCP—it federates them, creating a global network of discoverable, secure, and adaptable AI capabilities.
+### 1. Beyond Tool Sharing
+Traditional systems share individual functions. FEM Protocol enables sharing complete, stateful environments with persistent delegated control.
+
+### 2. Security-First Embodiment
+Every embodiment session is cryptographically secured with fine-grained permissions and real-time monitoring.
+
+### 3. Environment Awareness
+Bodies automatically adapt to deployment contexts while maintaining consistent interfaces for guests.
+
+### 4. Broker Intelligence
+Brokers are not passive infrastructure but intelligent agents that can embody different operational modes.
+
+### 5. Trust-Based Access
+Dynamic permission systems that evolve based on demonstrated reliability and compliance.
+
+This ontology establishes the conceptual foundation for building applications that leverage **Secure Hosted Embodiment**, enabling a new generation of collaborative AI systems where agents don't just call functions—they inhabit and control digital environments.
