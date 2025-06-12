@@ -1,120 +1,132 @@
-# Deployment Guide
+# Deployment Guide: Hosted Embodiment
 
-Production deployment strategies for FEP-FEM networks across various environments and scales.
+Production deployment strategies for FEM Protocol networks enabling **Secure Hosted Embodiment** across various environments and scales.
 
 ## Table of Contents
-- [Deployment Overview](#deployment-overview)
-- [Single Node Deployment](#single-node-deployment)
-- [Multi-Node Federation](#multi-node-federation)
-- [Container Orchestration](#container-orchestration)
-- [Cloud Deployments](#cloud-deployments)
-- [Monitoring and Operations](#monitoring-and-operations)
-- [Scaling Strategies](#scaling-strategies)
-- [Troubleshooting](#troubleshooting)
+- [Embodiment Deployment Overview](#embodiment-deployment-overview)
+- [Host Agent Deployment](#host-agent-deployment)
+- [Guest Agent Deployment](#guest-agent-deployment)
+- [Cross-Device Embodiment Setup](#cross-device-embodiment-setup)
+- [Container-Based Embodiment](#container-based-embodiment)
+- [Cloud Embodiment Infrastructure](#cloud-embodiment-infrastructure)
+- [Monitoring Embodiment Sessions](#monitoring-embodiment-sessions)
+- [Scaling Embodiment Networks](#scaling-embodiment-networks)
+- [Troubleshooting Embodiment](#troubleshooting-embodiment)
 
-## Deployment Overview
+## Embodiment Deployment Overview
 
-FEP-FEM supports multiple deployment patterns optimized for different scales and requirements. With MCP federation capabilities, deployments must also consider tool discovery, embodiment management, and cross-organizational federation.
+FEM Protocol supports multiple deployment patterns optimized for **Secure Hosted Embodiment** scenarios. Deployments must consider host body capabilities, guest discovery mechanisms, session management, and cross-device accessibility.
 
-### Architecture Patterns
+### Embodiment Architecture Patterns
 
-**Single Broker with MCP Registry**
+**Personal Cross-Device Embodiment**
 ```
-┌─────────────────┐
-│   FEM Broker    │ ← Coordinates agents + MCP tool registry
-│  + MCP Registry │
-└──────┬──────────┘
-   ┌───┼───┐
-   │   │   │
-  A1  A2  A3    ← Agents expose MCP tools, discover others
- MCP MCP MCP
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                      FEM Broker                                     │
+│               (Embodiment Coordination)                              │
+└──────────────────────────────┬───────────────────────────────────────────────────┘
+                              │ Embodiment Discovery & Session Management
+        ┌──────────────────────────────┼─────────────────────────────────────────────┐
+        │                              │                                  │
+┌───────▼─────────────────────────┐   ┌───────▼─────────────────────────┐   ┌───────▼─────────────────────────┐
+│        Laptop Host Agent        │   │       Desktop Host Agent      │   │        Phone Guest Agent      │
+│   • Development Body           │   │   • Gaming Body               │   │   • Discovers Host Bodies      │
+│   • Terminal & File Access     │   │   • GPU & Rendering Tools     │   │   • Requests Embodiment        │
+│   • MCP Server: :8080          │   │   • MCP Server: :8081          │   │   • Exercises Delegated Control│
+└─────────────────────────────────┘   └─────────────────────────────────┘   └─────────────────────────────────┘
+
+**Collaborative Virtual Presence**
+```
+                    ┌─────────────────────────────────────────────────────────┐
+                    │                    FEM Broker                             │
+                    └────────────────────────────┬──────────────────────────────┘
+                                            │
+┌─────────────────────────────────────────────┼─────────────────────────────────────────────┐
+│           Live2D Host Application              │                Guest AI Agent                  │
+│   • Avatar Body Definition                  │   • Requests Live2D Puppet Body           │
+│   • Expression & Animation Controls        │   • Controls Avatar via MCP Tools         │
+│   • Security: Avatar State Only           │   • Secure Session with Time Limits       │
+└─────────────────────────────────────────────┘─────────────────────────────────────────────┘
+
+**Enterprise Application Embodiment**
+```
+    ┌─────────────────────────────────────────────────────────────────────────────┐
+    │                    Enterprise FEM Broker                              │
+    │            (Multi-Tenant Embodiment Management)                        │
+    └──────────────────────────────────────┬───────────────────────────────────────┘
+                                  │
+  ┌──────────────────────────────────┼───────────────────────────────────────┐
+  │            Department A                   │           Department B                     │
+  │   Host: ERP System Body                  │   Host: Analytics Platform Body           │
+  │   Guest: Mobile Workflow Agent           │   Guest: Report Generation Agent          │
+  └──────────────────────────────────┘───────────────────────────────────────┘
 ```
 
-**Federated Brokers with Tool Sharing**
-```
-┌─────────────┐     ┌─────────────┐
-│Broker A     │◄───►│Broker B     │ ← Cross-broker tool discovery
-│+ MCP Registry│     │+ MCP Registry│
-└────┬────────┘     └────┬────────┘
- ┌───┼───┐           ┌───┼───┐
- │   │   │           │   │   │
-A1  A2  A3          B1  B2  B3
-│   │   │           │   │   │
-└─MCP tools─────────MCP tools─┘
-    Shared across brokers
-```
+### Embodiment Deployment Considerations
 
-**Multi-Environment Embodiment**
-```
-    ┌─────────┐
-    │ Broker  │
-    └────┬────┘
-    ┌────┼────┐
-    │         │
-┌───▼───┐ ┌──▼────┐
-│Agent A│ │Agent B│
-│Local  │ │Cloud  │
-│Env    │ │Env    │
-└───────┘ └───────┘
-│         │
-Local     S3/Lambda
-Tools     Tools
-```
-
-### MCP Federation Deployment Considerations
-
-- **Tool Discovery Performance** - Registry size, search indexing
-- **MCP Endpoint Management** - Dynamic port allocation, service discovery
-- **Embodiment Complexity** - Environment detection, tool adaptation
-- **Cross-Organization Security** - Tool access policies, data boundaries
-- **Federation Latency** - Tool call routing, remote execution delays
-
-### Traditional Deployment Considerations
-
-- **Latency Requirements** - Geographic distribution
-- **Availability Needs** - Single points of failure  
-- **Security Policies** - Network isolation, compliance
-- **Scale Requirements** - Agent count, message throughput
-- **Resource Constraints** - CPU, memory, network bandwidth
+- **Session Management** - Concurrent embodiment limits, session lifecycles, token management
+- **Security Boundaries** - Permission enforcement, audit logging, resource isolation
+- **Cross-Device Access** - Network discovery, mobile optimization, session handoff
+- **Body Compatibility** - Environment adaptation, tool schema validation
+- **Performance Isolation** - Resource limits per session, priority management
+- **Availability Requirements** - Host redundancy, session failover, embodiment discovery
+- **Compliance & Privacy** - Data boundaries, session audit trails, regulation adherence
+- **Network Topology** - Latency optimization, bandwidth management, firewall traversal
 
 ## Single Node Deployment
 
 ### Development Setup
 
 ```bash
-# Simple development deployment
+# Simple embodiment development deployment
 ./fem-broker --listen :8443 &
-./fem-coder --broker https://localhost:8443 --agent dev-agent &
+./fem-host-agent --broker https://localhost:8443 --agent laptop-host-alice &
 ```
 
-### MCP Federation Development Setup
+### Cross-Device Embodiment Development Setup
 
 ```bash
-# Start broker with MCP registry (when implemented)
-./fem-broker --listen :8443 --mcp-registry-enabled &
+# Start broker with embodiment coordination
+./fem-broker --listen :8443 --embodiment-enabled &
 
-# Start agents with MCP servers on different ports
-./fem-coder --broker https://localhost:8443 --agent calculator-agent --mcp-port 8080 &
-./fem-coder --broker https://localhost:8443 --agent analyzer-agent --mcp-port 8081 &
+# Start host agents offering different bodies
+./fem-host-agent --broker https://localhost:8443 --agent laptop-host-alice --mcp-port 8080 \
+  --body developer-workstation-v1 &
 
-# Test tool discovery
-curl -k -X POST https://localhost:8443/fep \
+./fem-host-agent --broker https://localhost:8443 --agent desktop-host-alice --mcp-port 8081 \
+  --body gaming-workstation-v1 &
+
+# Test body discovery
+curl -k -X POST https://localhost:8443/fem \
   -H "Content-Type: application/json" \
   -d '{
-    "type": "discoverTools",
-    "agent": "test-client",
+    "type": "discoverBodies",
+    "agent": "phone-guest-bob",
     "ts": '$(date +%s%3N)',
-    "nonce": "test-'$(date +%s)'",
+    "nonce": "discover-'$(date +%s)'",
     "body": {
-      "query": {"capabilities": ["math.*"], "maxResults": 10},
-      "requestId": "test-discovery"
+      "query": {"capabilities": ["shell.*", "file.read"], "environmentType": "local-development"},
+      "guestProfile": {"guestId": "phone-guest-bob", "intendedUse": "mobile-development"},
+      "requestId": "discover-dev-bodies"
     }
   }'
 
-# Test direct MCP tool call
-curl -X POST http://localhost:8080/tools/call \
+# Test embodiment request
+curl -k -X POST https://localhost:8443/fem \
   -H "Content-Type: application/json" \
-  -d '{"name": "math.add", "arguments": {"a": 5, "b": 3}}'
+  -d '{
+    "type": "requestEmbodiment",
+    "agent": "phone-guest-bob",
+    "ts": '$(date +%s%3N)',
+    "nonce": "embody-'$(date +%s)'",
+    "body": {
+      "hostAgentId": "laptop-host-alice",
+      "bodyId": "developer-workstation-v1",
+      "requestedDuration": 1800,
+      "intendedActions": ["Check project status", "Run development server"],
+      "requestId": "embody-dev-001"
+    }
+  }'
 ```
 
 ### Production Single Node
@@ -122,17 +134,22 @@ curl -X POST http://localhost:8080/tools/call \
 #### 1. System Requirements
 
 ```bash
-# Minimum production requirements
+# Minimum requirements for embodiment hosting
 CPU: 2 cores
 Memory: 4GB RAM
 Storage: 20GB SSD
 Network: 1Gbps
 
-# Recommended for larger deployments
+# Recommended for multi-guest embodiment
 CPU: 8 cores
 Memory: 16GB RAM
 Storage: 100GB NVMe SSD
 Network: 10Gbps
+
+# Additional considerations for embodiment:
+# - Separate memory allocation per embodiment session
+# - Storage isolation for guest workspaces
+# - Network bandwidth for real-time tool execution
 ```
 
 #### 2. Installation
@@ -168,7 +185,7 @@ sudo chmod 600 /etc/fem/broker.key
 ```ini
 # /etc/systemd/system/fem-broker.service
 [Unit]
-Description=FEM Broker
+Description=FEM Broker - Embodiment Coordination
 After=network.target
 Wants=network-online.target
 
@@ -181,8 +198,9 @@ ExecStart=/usr/local/bin/fem-broker \
   --cert /etc/fem/broker.crt \
   --key /etc/fem/broker.key \
   --log-level info \
-  --mcp-registry-enabled \
-  --mcp-discovery-timeout 30s
+  --embodiment-enabled \
+  --session-timeout 3600 \
+  --max-concurrent-sessions 100
 Restart=always
 RestartSec=5s
 LimitNOFILE=1048576
@@ -244,35 +262,37 @@ server {
 }
 ```
 
-## Multi-Node Federation
+## Multi-Node Embodiment Networks
 
-### Hub-and-Spoke Topology
+### Hub-and-Spoke Embodiment Topology
 
-#### Central Hub Broker
+#### Central Embodiment Hub
 
 ```bash
-# Hub broker configuration
+# Hub broker for embodiment coordination
 ./fem-broker \
   --listen :8443 \
   --cert /etc/ssl/certs/hub-broker.crt \
   --key /etc/ssl/private/hub-broker.key \
-  --federation-mode hub \
-  --federation-listen :8444
+  --embodiment-mode hub \
+  --federation-listen :8444 \
+  --cross-region-embodiment true
 ```
 
-#### Spoke Brokers
+#### Regional Embodiment Brokers
 
 ```bash
-# Regional broker connects to hub
+# Regional broker for local embodiment
 ./fem-broker \
   --listen :8443 \
   --cert /etc/ssl/certs/regional-broker.crt \
   --key /etc/ssl/private/regional-broker.key \
-  --federation-mode spoke \
-  --federation-hub https://hub.example.com:8444
+  --embodiment-mode spoke \
+  --hub-broker https://hub.example.com:8444 \
+  --local-embodiment-priority true
 ```
 
-### Mesh Topology
+### Mesh Embodiment Topology
 
 #### Broker A Configuration
 
@@ -281,7 +301,7 @@ server {
 listen: ":8443"
 cert: "/etc/ssl/certs/broker-a.crt"
 key: "/etc/ssl/private/broker-a.key"
-federation:
+embodiment:
   mode: "mesh"
   peers:
     - "https://broker-b.example.com:8443"
@@ -289,6 +309,7 @@ federation:
   discovery:
     enabled: true
     interval: "30s"
+    cross_broker_sessions: true
 ```
 
 #### Service Discovery
@@ -303,7 +324,7 @@ dig SRV _fem._tcp.brokers.example.com
 # broker-c.example.com. 0 0 8443
 ```
 
-### Cross-Organization MCP Federation
+### Cross-Organization Embodiment Federation
 
 #### Organization A (Hospital) Configuration
 
@@ -312,28 +333,30 @@ dig SRV _fem._tcp.brokers.example.com
 listen: ":8443"
 cert: "/etc/ssl/certs/hospital-a.crt"
 key: "/etc/ssl/private/hospital-a.key"
-mcp:
-  registry_enabled: true
-  tool_sharing:
+embodiment:
+  cross_org_enabled: true
+  body_sharing:
     external_access: "restricted"
-    allowed_capabilities:
-      - "data.aggregate"    # Can share aggregated data
-      - "analysis.statistical"  # Can share analysis tools
-    denied_capabilities:
-      - "data.raw"          # Never share raw patient data
+    allowed_body_types:
+      - "data-analysis-secure"
+      - "statistical-compute"
+    denied_body_types:
+      - "patient-data-access"
 federation:
   mode: "cross-org"
   peers:
     - name: "hospital-b"
       endpoint: "https://hospital-b.medical.network:8443"
       trust_policy: "verified"
-      tool_access: "mutual"
+      embodiment_access: "mutual"
 security:
-  mcp_tool_policies:
+  embodiment_policies:
     - pattern: "patient.*"
       access: "internal-only"
     - pattern: "analysis.*"
       access: "federated"
+    - pattern: "secure-compute.*"
+      access: "cross-org"
 ```
 
 #### Organization B (Hospital) Configuration
@@ -343,48 +366,49 @@ security:
 listen: ":8443"
 cert: "/etc/ssl/certs/hospital-b.crt"
 key: "/etc/ssl/private/hospital-b.key"
-mcp:
-  registry_enabled: true
-  tool_sharing:
+embodiment:
+  cross_org_enabled: true
+  body_sharing:
     external_access: "restricted"
-    allowed_capabilities:
-      - "ml.training"       # Can share ML training
-      - "model.inference"   # Can share model inference
-    denied_capabilities:
-      - "data.raw"          # Never share raw data
+    allowed_body_types:
+      - "ml-training-secure"
+      - "model-inference"
+    denied_body_types:
+      - "patient-data-access"
 federation:
   mode: "cross-org"
   peers:
     - name: "hospital-a"
       endpoint: "https://hospital-a.medical.network:8443"
       trust_policy: "verified"
-      tool_access: "mutual"
+      embodiment_access: "mutual"
 security:
-  mcp_tool_policies:
+  embodiment_policies:
     - pattern: "patient.*"
       access: "internal-only"
     - pattern: "ml.*"
       access: "federated"
+    - pattern: "secure-compute.*"
+      access: "cross-org"
 ```
 
-#### Cross-Org Agent Example
+#### Cross-Org Embodiment Example
 
 ```bash
-# Hospital A: Data analysis agent
-./fem-coder \
+# Hospital A: Host offering secure data analysis body
+./fem-host-agent \
   --broker https://hospital-a.medical.network:8443 \
-  --agent hospital-a-analyzer \
+  --agent hospital-a-host \
+  --body data-analysis-secure \
   --mcp-port 8080 \
-  --mcp-tools "data.aggregate,analysis.statistical" \
   --embodiment-policy /etc/fem/hospital-embodiment.json
 
-# Hospital B: ML training agent  
-./fem-coder \
+# Hospital B: Guest seeking analysis capabilities
+./fem-guest-agent \
   --broker https://hospital-b.medical.network:8443 \
-  --agent hospital-b-ml \
-  --mcp-port 8080 \
-  --mcp-tools "ml.training,model.inference" \
-  --embodiment-policy /etc/fem/hospital-embodiment.json
+  --agent hospital-b-researcher \
+  --target-capabilities "data.aggregate,analysis.statistical" \
+  --cross-org-enabled
 ```
 
 #### Embodiment Policy Example
@@ -442,9 +466,9 @@ services:
       - FEM_LISTEN=:8443
       - FEM_TLS_CERT=/certs/broker.crt
       - FEM_TLS_KEY=/certs/broker.key
-      - FEM_MCP_REGISTRY_ENABLED=true
-      - FEM_MCP_DISCOVERY_TIMEOUT=30s
-      - FEM_MCP_TOOL_INDEX_SIZE=10000
+      - FEM_EMBODIMENT_ENABLED=true
+      - FEM_SESSION_TIMEOUT=3600s
+      - FEM_MAX_CONCURRENT_SESSIONS=100
     volumes:
       - ./certs:/certs:ro
       - broker-data:/var/lib/fem
@@ -457,13 +481,15 @@ services:
       timeout: 10s
       retries: 3
 
-  fem-coder:
-    image: fem-coder:latest
+  fem-host-dev:
+    image: fem-host-agent:latest
     environment:
       - FEM_BROKER_URL=https://fem-broker:8443
-      - FEM_AGENT_ID=coder-001
+      - FEM_AGENT_ID=dev-host-001
+      - FEM_AGENT_TYPE=host
       - FEM_MCP_PORT=8080
-      - FEM_MCP_TOOLS=code.execute,shell.run,math.add,math.multiply
+      - FEM_BODY_ID=container-dev-v1
+      - FEM_BODY_TOOLS=shell.execute,file.read,file.write,code.execute
       - FEM_ENVIRONMENT_TYPE=container
     depends_on:
       - fem-broker
@@ -471,15 +497,17 @@ services:
       - fem-network
     restart: unless-stopped
     deploy:
-      replicas: 3
+      replicas: 2
 
-  fem-analyzer:
-    image: fem-coder:latest
+  fem-host-data:
+    image: fem-host-agent:latest
     environment:
       - FEM_BROKER_URL=https://fem-broker:8443
-      - FEM_AGENT_ID=analyzer-001
+      - FEM_AGENT_ID=data-host-001
+      - FEM_AGENT_TYPE=host
       - FEM_MCP_PORT=8081
-      - FEM_MCP_TOOLS=data.analyze,data.visualize,file.read
+      - FEM_BODY_ID=data-processing-v1
+      - FEM_BODY_TOOLS=data.analyze,data.transform,file.read
       - FEM_ENVIRONMENT_TYPE=container
     depends_on:
       - fem-broker
@@ -1022,81 +1050,93 @@ agent:
   heartbeat_interval: 10s
 ```
 
-## Troubleshooting
+## Troubleshooting Embodiment
 
-### Common Issues
+### Common Embodiment Issues
 
-#### 1. Connection Problems
+#### 1. Embodiment Request Failures
 
 ```bash
 # Check broker connectivity
 curl -k -v https://fem-broker:8443/health
 
-# Check certificates
-openssl s_client -connect fem-broker:8443 -servername fem-broker
+# Test body discovery
+curl -k -X POST https://fem-broker:8443/fem \
+  -H "Content-Type: application/json" \
+  -d '{"type": "discoverBodies", "agent": "test-guest", "body": {"query": {"capabilities": ["*"]}}}'
 
-# Check DNS resolution
-nslookup fem-broker
+# Check host agent availability
+kubectl logs -f deployment/fem-host-dev
 ```
 
-#### 2. Registration Failures
+#### 2. Session Management Issues
 
 ```bash
-# Check agent logs
-kubectl logs -f deployment/fem-coder
+# Check active embodiment sessions
+curl -k -s https://fem-broker:8443/metrics | grep embodiment_sessions
 
-# Verify signatures
-./fem-debug verify-signature --envelope envelope.json --pubkey agent.pub
+# Monitor session timeouts
+kubectl logs -f deployment/fem-broker | grep "session.*expired"
+
+# Verify session tokens
+./fem-debug verify-session --token session-abc123
 ```
 
-#### 3. Performance Issues
+#### 3. Permission and Security Issues
 
 ```bash
-# Check resource usage
-kubectl top pods -n fem-system
+# Check security policy violations
+kubectl logs -f deployment/fem-host-dev | grep "permission.*denied"
 
-# Monitor message queues
-curl -k -s https://fem-broker:8443/metrics | grep queue_length
+# Monitor audit logs
+tail -f /var/log/fem/embodiment-audit.log
 
-# Check network latency
-ping fem-broker
-traceroute fem-broker
+# Test tool execution permissions
+curl -k -X POST https://host:8080/mcp/sessions/token123/tools/call \
+  -H "Content-Type: application/json" \
+  -d '{"tool": "shell.execute", "parameters": {"command": "pwd"}}'
 ```
 
 ### Debug Tools
 
 ```bash
-# FEM network diagnostic script
+# FEM embodiment diagnostic script
 #!/bin/bash
-echo "=== FEM Network Diagnostics ==="
+echo "=== FEM Embodiment Diagnostics ==="
 
 echo "1. Broker Health:"
 curl -k -s https://fem-broker:8443/health | jq .
 
-echo "2. Agent Count:"
-kubectl get pods -l app=fem-coder --no-headers | wc -l
+echo "2. Active Embodiment Sessions:"
+curl -k -s https://fem-broker:8443/metrics | grep embodiment_sessions
 
-echo "3. Network Connectivity:"
-kubectl exec -it deployment/fem-coder -- curl -k https://fem-broker:8443/health
+echo "3. Host Agent Count:"
+kubectl get pods -l app=fem-host-agent --no-headers | wc -l
 
-echo "4. Resource Usage:"
+echo "4. Network Connectivity:"
+kubectl exec -it deployment/fem-host-dev -- curl -k https://fem-broker:8443/health
+
+echo "5. Resource Usage:"
 kubectl top pods -n fem-system
 
-echo "5. Recent Events:"
-kubectl get events -n fem-system --sort-by='.lastTimestamp' | tail -10
+echo "6. Recent Embodiment Events:"
+kubectl get events -n fem-system --sort-by='.lastTimestamp' | grep -i embodiment | tail -10
 ```
 
 ### Log Analysis
 
 ```bash
-# Analyze broker logs for errors
-kubectl logs deployment/fem-broker | grep -i error
+# Analyze broker logs for embodiment errors
+kubectl logs deployment/fem-broker | grep -i "embodiment.*error"
 
-# Check agent registration patterns  
-kubectl logs deployment/fem-coder | grep "Registration"
+# Check host agent body registration patterns  
+kubectl logs deployment/fem-host-dev | grep "body.*registered"
 
-# Monitor message processing rates
-kubectl logs deployment/fem-broker | grep "processed" | tail -100
+# Monitor embodiment session creation rates
+kubectl logs deployment/fem-broker | grep "embodiment.*granted" | tail -100
+
+# Track tool execution patterns
+kubectl logs deployment/fem-host-dev | grep "tool.*executed" | tail -50
 ```
 
-This deployment guide provides comprehensive strategies for deploying FEP-FEM networks from development to large-scale production environments.
+This deployment guide provides comprehensive strategies for deploying FEM Protocol networks that enable **Secure Hosted Embodiment** from development to large-scale production environments.

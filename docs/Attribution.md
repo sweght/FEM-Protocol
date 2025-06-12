@@ -1,11 +1,11 @@
 # Attribution & Upstream Dependencies
-*Federated Embodiment Mesh (FEM) Suite — v0.1.3*
+*FEM Protocol Suite — v0.3.0*
 
 ## Authors
 
 **Chaz Dinkle** - *Creator, Protocol Designer, and Lead Developer*
-- Federated Embodiment Protocol (FEP) specification
-- Federated Embodied Mesh (FEM) framework implementation  
+- FEM Protocol specification (Secure Hosted Embodiment)
+- FEM Protocol framework implementation  
 - Core architecture and cryptographic security design
 - Cross-platform build and release automation
 
@@ -14,7 +14,7 @@
 - **Code**: Apache 2.0 ([LICENSE-CODE](../LICENSE-CODE))
 - **Documentation**: CC-BY-SA 4.0 ([LICENSE-DOCS](../LICENSE-DOCS))
 
-This framework builds on a number of open standards and open-source projects. Below is a non-exhaustive list of protocols, libraries, and prior art that influenced or are directly incorporated into FEM/FEP.
+This framework builds on a number of open standards and open-source projects. Below is a non-exhaustive list of protocols, libraries, and prior art that influenced or are directly incorporated into the FEM Protocol.
 
 | Component / Spec | Upstream Project | License | Where Used |
 |------------------|-----------------|---------|------------|
@@ -26,7 +26,7 @@ This framework builds on a number of open standards and open-source projects. Be
 | **Ed25519 / EdDSA** | DJB, NIST | *Public Domain* | Envelope signatures |
 | **JWT (RFC 7519)** | IETF | RFC | Capability tokens (alternative) |
 | **Macaroons** | Google | Apache 2.0 / Paper | Capability tokens (alternative) |
-| **Model Context Protocol (MCP)** | Anthropic (OSS spec) | Apache 2.0 | Conceptual foundation; FEP envelopes extend MCP grammar |
+| **Model Context Protocol (MCP)** | Anthropic (OSS spec) | Apache 2.0 | Tool interface layer; FEM Protocol enables hosted embodiment on top of MCP |
 | **Embodied Cognition (theory)** | Varela, Thompson, Clark et al. | Academic literature / Fair use | Core philosophical inspiration for "body" + "mind" separation and environment-bound intelligence |
 | **BoringSSL / OpenSSL** | Google / OSF | Apache 2.0 / Apache 1.1 | TLS implementation in broker binaries |
 | **Docker / OCI** | Docker Inc. / OCI | Apache 2.0 | Container packaging for brokers, routers, bodies |

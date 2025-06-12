@@ -1,446 +1,352 @@
-# Quick Start Guide: MCP Federation in Minutes
+# Quick Start Guide: Secure Hosted Embodiment in Minutes
 
-Experience the power of federated MCP tools with FEP-FEM. This guide shows you how to transform isolated MCP servers into a discoverable, collaborative network.
+Experience the power of **Secure Hosted Embodiment** with FEM Protocol. This guide walks you through the three flagship use cases where guest "minds" inhabit host-offered "bodies" to enable new forms of collaborative AI interaction.
 
 ## Prerequisites
 
 - **Linux/macOS/Windows** (amd64 or arm64)
 - **TLS certificates** (auto-generated for development)
+- **MCP-compatible tools** (optional, for advanced scenarios)
 
-## Option 1: Download Pre-built Binaries
+## Choose Your Embodiment Journey
 
-### 1. Download Release
+### 🎭 Live2D Guest System (2 minutes)
+**Virtual avatar control through hosted embodiment**
 
-Visit [GitHub Releases](https://github.com/chazmaniandinkle/FEP-FEM/releases/latest) and download the appropriate archive for your platform:
+### 💻 Cross-Device Development (3 minutes)  
+**Access your laptop's development environment from your phone**
 
-- `fem-v{version}-linux-amd64.tar.gz`
-- `fem-v{version}-linux-arm64.tar.gz`
-- `fem-v{version}-darwin-amd64.tar.gz` (Intel Mac)
-- `fem-v{version}-darwin-arm64.tar.gz` (Apple Silicon)
-- `fem-v{version}-windows-amd64.zip`
+### 📚 Interactive Storytelling (4 minutes)
+**AI storytellers controlling game worlds through secure embodiment**
 
-### 2. Extract Binaries
+---
 
-```bash
-# Linux/macOS
-tar -xzf fem-v*-linux-amd64.tar.gz
-cd fem-v*-linux-amd64/
+## 🎭 Live2D Guest System
 
-# Windows (PowerShell)
-Expand-Archive fem-v*-windows-amd64.zip
-cd fem-v*-windows-amd64/
-```
+Transform any virtual avatar into a host body that AI agents can inhabit and control.
 
-### 3. Start Your First MCP Federation Network
+### 1. Download & Setup
 
 ```bash
-# Terminal 1: Start the FEP broker (handles MCP tool discovery)
-./fem-broker --listen :8443
-
-# Terminal 2: Agent with calculator MCP tools
-./fem-coder --broker https://localhost:8443 --agent calculator-001 --mcp-port 8080
-
-# Terminal 3: Agent with file processing tools  
-./fem-coder --broker https://localhost:8443 --agent processor-001 --mcp-port 8081
-
-# ✨ Now any agent can discover and use tools from other agents!
+# Download latest release
+wget https://github.com/chazmaniandinkle/FEP-FEM/releases/latest/download/fem-v0.3.0-linux-amd64.tar.gz
+tar -xzf fem-v0.3.0-linux-amd64.tar.gz
+cd fem-v0.3.0-linux-amd64/
 ```
 
-**What just happened?**
-- Broker coordinates MCP tool discovery across the network
-- Calculator agent exposes `code.execute` and `shell.run` tools via MCP server on port 8080
-- Processor agent exposes the same tools via MCP server on port 8081  
-- Both agents can discover and use each other's tools through FEP federation
-
-## Option 2: Build from Source
-
-### 1. Clone Repository
+### 2. Start the Live2D Embodiment Demo
 
 ```bash
-git clone https://github.com/chazmaniandinkle/FEP-FEM.git
-cd FEP-FEM
+# Terminal 1: Start embodiment coordination broker
+./fem-broker --listen :8443 --embodiment-enabled
+
+# Terminal 2: Start Live2D host offering avatar body
+./fem-live2d-host --broker https://localhost:8443 \
+  --agent avatar-host-maya \
+  --body live2d-puppet-v1 \
+  --avatar-model ./avatars/maya.live2d
+
+# Terminal 3: Start AI guest that wants to control the avatar
+./fem-guest-agent --broker https://localhost:8443 \
+  --agent ai-storyteller \
+  --target-body live2d-puppet-v1 \
+  --personality "cheerful anime character"
 ```
 
-### 2. Build All Components
+### 3. Watch the Magic ✨
 
 ```bash
-# Build everything
-make build
+# The AI guest automatically:
+# 1. Discovers the Live2D avatar body
+# 2. Requests embodiment access  
+# 3. Starts controlling avatar expressions and speech
+# 4. Responds to user interactions through the avatar
 
-# Or build individually
-cd broker && go build . && cd ..
-cd router && go build ./cmd/fem-router && cd ..
-cd bodies/coder && go build ./cmd/fem-coder && cd ../..
-```
-
-### 3. Run Test Network
-
-```bash
-# Automated test
-./test-network.sh
-
-# Or comprehensive demo
-./demo-fem-network.sh
-```
-
-## Basic Usage
-
-### Starting a Broker
-
-```bash
-# Development (self-signed cert)
-./fem-broker --listen :8443
-
-# Production (with your TLS cert)
-./fem-broker --listen :8443 --cert server.crt --key server.key
-```
-
-The broker will:
-- Generate a self-signed certificate for development
-- Listen for FEP agents on the specified port
-- Provide a `/health` endpoint for monitoring
-
-### Connecting an Agent
-
-```bash
-# Basic agent connection
-./fem-coder --broker https://localhost:8443 --agent my-agent-001
-
-# With specific capabilities
-./fem-coder --broker https://broker.example.com:8443 \
-            --agent production-coder \
-            --capabilities "code.execute,file.read,shell.run"
-```
-
-### Verifying the Connection
-
-Check broker logs for:
-```
-Received registerAgent envelope from my-agent-001
-Registered agent my-agent-001 with capabilities [code.execute file.read shell.run]
-```
-
-Check agent logs for:
-```
-Registration successful
-Agent my-agent-001 connected to broker
-```
-
-## Testing Tool Execution
-
-Once connected, the agent can receive tool calls. Here's how to test manually:
-
-### 1. Send a Tool Call (using curl)
-
-```bash
-curl -k -X POST https://localhost:8443 \
+# Test avatar control manually:
+curl -k -X POST https://localhost:8443/fem \
   -H "Content-Type: application/json" \
   -d '{
-    "type": "toolCall",
-    "agent": "orchestrator",
-    "ts": '$(date +%s000)',
-    "nonce": "test-'$(date +%s)'",
-    "sig": "",
+    "type": "requestEmbodiment",
+    "agent": "test-guest",
     "body": {
-      "tool": "code.execute",
-      "parameters": {
-        "language": "python",
-        "code": "print(\"Hello from FEM!\")\nresult = 2 + 2\nprint(f\"Result: {result}\")"
-      },
-      "requestId": "test-exec-001"
+      "hostAgentId": "avatar-host-maya",
+      "bodyId": "live2d-puppet-v1",
+      "intendedActions": ["Make avatar wave and say hello"]
     }
   }'
 ```
 
-### 2. Check Agent Response
+**What just happened?**
+- 🏠 **Host** offered a Live2D avatar as an embodiment "body"
+- 🧠 **Guest** AI discovered and inhabited the avatar body
+- 🎮 **Security** ensured guest can only control avatar, not host system
+- 🎭 **Result** AI can now control virtual avatar expressions, speech, and animations
 
-The agent will execute the code and return results through the broker.
+---
 
-## MCP Federation Scenarios
+## 💻 Cross-Device Development
 
-### Scenario 1: Instant MCP Tool Federation (2 minutes)
+Enable your phone to securely control your laptop's development environment.
 
-Transform standalone MCP servers into a federated network:
+### 1. Setup Laptop Host
 
 ```bash
-# Terminal 1: Start FEP broker
+# Terminal 1: Broker (can be on laptop or separate server)
 ./fem-broker --listen :8443
 
-# Terminal 2: Existing MCP server (running on port 8080)
-python your_existing_mcp_server.py &
-
-# Terminal 3: Federate the MCP server  
-./fem-agent-wrapper --broker https://localhost:8443 \
-  --agent "legacy-mcp-server" \
-  --mcp-endpoint "http://localhost:8080/mcp" \
-  --auto-register-tools
-
-# Now your MCP tools are discoverable across the FEM network!
+# Terminal 2: Laptop offers development environment as embodiment body
+./fem-host-agent --broker https://localhost:8443 \
+  --agent laptop-host-alice \
+  --body developer-workstation-v1 \
+  --mcp-port 8080 \
+  --security-policy ./configs/dev-security.json
 ```
 
-### Scenario 2: Multi-Environment Agent Embodiment (3 minutes)
+**Security Policy Example** (`configs/dev-security.json`):
+```json
+{
+  "allowedPaths": ["/home/alice/projects/*", "/tmp/fem-workspace/*"],
+  "deniedCommands": ["rm -rf", "sudo", "curl", "ssh"],
+  "maxSessionDuration": 3600,
+  "maxConcurrentGuests": 2
+}
+```
 
-Same agent, different tools based on environment:
+### 2. Connect from Phone
+
+```bash
+# On your phone (using Termux or similar)
+./fem-guest-agent --broker https://your-laptop-ip:8443 \
+  --agent phone-guest-bob \
+  --target-capabilities "shell.execute,file.read,file.write" \
+  --device-type mobile
+```
+
+### 3. Secure Development from Anywhere
+
+```bash
+# Your phone can now securely:
+
+# Check git status
+echo "shell.execute git status /home/alice/projects/my-app" | \
+  nc localhost 8080
+
+# Read configuration files  
+echo "file.read /home/alice/projects/my-app/package.json" | \
+  nc localhost 8080
+
+# Start development server (accessible to your phone's browser)
+echo "shell.execute 'cd /home/alice/projects/my-app && npm run dev'" | \
+  nc localhost 8080
+```
+
+**What just happened?**
+- 🏠 **Laptop** offered secure development environment as embodiment body
+- 📱 **Phone** inhabited the body with delegated control capabilities
+- 🔒 **Security** restricted guest to safe paths and commands only
+- 🌐 **Result** Full development access from mobile device with laptop security
+
+---
+
+## 📚 Interactive Storytelling 
+
+AI storytellers control game state through secure embodiment sessions.
+
+### 1. Setup Story World Host
 
 ```bash
 # Terminal 1: Broker
 ./fem-broker --listen :8443
 
-# Terminal 2: Local development embodiment
-./fem-coder --broker https://localhost:8443 --agent file-agent \
-  --environment "local" \
-  --mcp-tools "file.read.filesystem,file.write.filesystem,shell.execute"
-
-# Terminal 3: Simulate cloud migration
-./fem-coder --broker https://localhost:8443 --agent file-agent \
-  --environment "cloud" \
-  --mcp-tools "file.read.s3,file.write.s3,lambda.invoke" \
-  --update-embodiment
-
-# Same agent logic, different capabilities based on environment
+# Terminal 2: Game/story application offers world control body
+./fem-story-host --broker https://localhost:8443 \
+  --agent story-world-host \
+  --body interactive-story-v1 \
+  --world-state ./worlds/fantasy-tavern.json \
+  --ui-port 3000
 ```
 
-### Scenario 3: Cross-Organization MCP Tool Sharing (5 minutes)
-
-Secure tool sharing between organizations:
+### 2. Connect AI Storyteller
 
 ```bash
-# Organization A setup
-./fem-broker --listen :8443 --broker-id "org-a" &
-./fem-coder --broker https://localhost:8443 --agent "data-validator" \
-  --mcp-tools "data.validate,data.clean" \
-  --access-policy "public" &
-
-# Organization B setup  
-./fem-broker --listen :8444 --broker-id "org-b" &
-./fem-coder --broker https://localhost:8444 --agent "ml-processor" \
-  --mcp-tools "ml.train,ml.predict" \
-  --access-policy "partners:org-a" &
-
-# Connect brokers for federation
-./fem-router --connect-brokers org-a:8443 org-b:8444
-
-# Now Org B can use Org A's validation tools, and vice versa
+# Terminal 3: AI storyteller requests world control embodiment
+./fem-storyteller-agent --broker https://localhost:8443 \
+  --agent narrative-ai \
+  --target-body interactive-story-v1 \
+  --story-style "fantasy-adventure" \
+  --personality "mysterious tavern keeper"
 ```
 
-### Scenario 4: Dynamic MCP Tool Discovery (1 minute)
-
-Discover and use any available tool:
+### 3. Interactive Storytelling Session
 
 ```bash
-# Query available tools
-curl -k https://localhost:8443/api/v1/discover \
+# Open story interface
+open http://localhost:3000
+
+# The AI storyteller can now:
+# - Control NPC dialogue and actions
+# - Modify world state (weather, lighting, mood)
+# - Respond to player choices
+# - Advance storylines dynamically
+
+# Test story control manually:
+curl -X POST http://localhost:3000/api/story/action \
   -H "Content-Type: application/json" \
   -d '{
-    "query": {
-      "capabilities": ["file.*"],
-      "environmentType": "local",
-      "maxResults": 5
-    }
-  }'
-
-# Response shows all file-related tools with MCP endpoints:
-# {
-#   "tools": [
-#     {
-#       "agentId": "file-agent-001",
-#       "mcpEndpoint": "https://agent1:8080/mcp",
-#       "capabilities": ["file.read", "file.write"],
-#       "mcpTools": [...]
-#     }
-#   ]
-# }
-
-# Use discovered tool via standard MCP protocol
-curl -X POST https://agent1:8080/mcp \
-  -H "Content-Type: application/json" \
-  -d '{
-    "method": "tools/call",
-    "params": {
-      "name": "file.read",
-      "arguments": {"path": "/tmp/test.txt"}
+    "action": "update_world",
+    "parameters": {
+      "weather": "thunderstorm",
+      "mood": "ominous", 
+      "npc_dialogue": "A mysterious stranger enters the tavern, rain dripping from their cloak..."
     }
   }'
 ```
 
-### Scenario 5: Agent Collaboration Workflow (3 minutes)
+**What just happened?**
+- 🏠 **Story App** offered world control as an embodiment body
+- 🧠 **AI Storyteller** inhabited the world with narrative control
+- 🎮 **Security** ensured AI can only control story elements, not system
+- 📖 **Result** Dynamic, AI-driven interactive storytelling experience
 
-Agents discovering and using each other's MCP tools:
+---
 
-```bash
-# Start collaborative agent network
-./fem-broker --listen :8443 &
+## Understanding Hosted Embodiment
 
-# Data processing pipeline agents
-./fem-coder --agent "data-ingester" \
-  --mcp-tools "data.fetch.api,data.fetch.csv" &
+### The Core Innovation
 
-./fem-coder --agent "data-transformer" \
-  --mcp-tools "data.clean,data.normalize,data.validate" &
-
-./fem-coder --agent "data-analyzer" \
-  --mcp-tools "stats.analyze,ml.cluster,viz.plot" &
-
-./fem-coder --agent "report-generator" \
-  --mcp-tools "report.create,report.export.pdf" &
-
-# Orchestrator agent that uses all the above tools
-./fem-coder --agent "pipeline-orchestrator" \
-  --mcp-client-only \
-  --auto-discover-tools \
-  --workflow "data_pipeline.json"
-
-# The orchestrator automatically discovers and chains tools:
-# ingester.fetch → transformer.clean → analyzer.stats → generator.report
+Traditional approach: **Function calls**
+```
+AI Agent → Function Call → Tool Response
 ```
 
-### Scenario 6: Environment-Aware Tool Adaptation (2 minutes)
+FEM Protocol approach: **Hosted Embodiment**
+```
+Guest Mind → Discovery → Embodiment Request → Host Body → Delegated Control
+```
 
-Agent automatically adapts tools when environment changes:
+### Security Model
+
+**Secure Delegated Control** means:
+- 🔐 **Cryptographic Identity** - Ed25519 signatures for all agents
+- ⏱️ **Time-Limited Sessions** - Embodiment expires automatically
+- 🛡️ **Permission Boundaries** - Hosts define exactly what guests can control
+- 📝 **Audit Logging** - Every action is logged for review
+- 🚫 **Isolation** - Guests cannot access host system beyond granted permissions
+
+### Key Components
+
+- **🧠 Guest Agent** - The "mind" that wants to inhabit and control
+- **🏠 Host Agent** - Offers "bodies" (sandboxed capability sets) for embodiment
+- **🎭 Body** - A secure collection of MCP tools representing capabilities
+- **🌐 Broker** - Coordinates discovery and embodiment requests
+- **🎫 Session** - Time-bounded period of delegated control with audit logging
+
+---
+
+## Advanced Scenarios
+
+### Multi-Guest Embodiment
 
 ```bash
-# Start adaptive agent
-./fem-coder --agent "adaptive-storage" \
-  --auto-detect-environment \
-  --body-templates "storage_bodies.yaml"
+# One Live2D avatar, multiple AI personalities
+./fem-guest-agent --agent cheerful-ai --target-body live2d-puppet-v1 &
+./fem-guest-agent --agent serious-ai --target-body live2d-puppet-v1 &
 
-# storage_bodies.yaml defines:
-# local: file.read.filesystem, file.write.filesystem
-# cloud: file.read.s3, file.write.s3  
-# edge: file.read.cache, file.write.batch
-
-# Agent detects AWS environment and automatically embodies cloud tools
-# Agent detects local environment and automatically embodies filesystem tools
-# Same MCP interface, environment-appropriate implementations
+# Host manages personality switching and session coordination
 ```
+
+### Cross-Device Development Team
+
+```bash
+# Team laptop offers development body
+./fem-host-agent --body team-dev-env --max-guests 3
+
+# Multiple developers can access from different devices
+./fem-guest-agent --agent alice-phone --target-body team-dev-env &
+./fem-guest-agent --agent bob-tablet --target-body team-dev-env &
+./fem-guest-agent --agent charlie-laptop --target-body team-dev-env &
+```
+
+### Collaborative Story Worlds
+
+```bash
+# Multiple AIs controlling different aspects of the same story
+./fem-storyteller-agent --role "narrator" --target-body story-world &
+./fem-storyteller-agent --role "npc-controller" --target-body story-world &
+./fem-storyteller-agent --role "environment" --target-body story-world &
+```
+
+---
 
 ## Next Steps
 
-- **[Framework Architecture](FEM-Framework.md)** - Understand the system design
-- **[Agent Development](Agent-Development.md)** - Build custom agents
-- **[Security Guide](Security.md)** - Secure your deployment
-- **[Deployment Guide](Deployment.md)** - Production deployment
+### Learn the Architecture
+- **[FEM Framework](FEM-Framework.md)** - Understanding Broker-as-Agent and hosted embodiment
+- **[Protocol Specification](Protocol-Specification.md)** - Complete technical specification
+
+### Build Your Own
+- **[Agent Development](Agent-Development.md)** - Create custom host and guest agents
+- **[MCP Integration](MCP-Integration.md)** - Transform MCP tools into embodiment bodies
+- **[Hosted Embodiment Guide](Hosted-Embodiment-Guide.md)** - Deep dive into host/guest patterns
+
+### Deploy Securely  
+- **[Security Guide](Security.md)** - Secure Delegated Control implementation
+- **[Deployment Guide](Deployment.md)** - Production deployment patterns
+
+---
 
 ## Troubleshooting
 
-### Common Issues
-
-**"Connection refused"**
-- Ensure broker is running before starting agents
-- Check firewall settings for port 8443
-- Verify TLS certificate generation
-
-**"Registration failed"**
-- Check agent logs for signature errors
-- Ensure broker and agent have compatible protocol versions
-- Verify network connectivity
-
-**"Permission denied"**
-- Check agent capabilities match requested operations
-- Verify broker security policies
-- Review signature verification
-
-### Getting Help
-
-- **Issues**: [GitHub Issues](https://github.com/chazmaniandinkle/FEP-FEM/issues)
-- **Documentation**: [Complete docs](../README.md#documentation)
-- **Examples**: Check `test-network.sh` and `demo-fem-network.sh`
-
-## Example Configurations
-
-### Minimal Broker
-
+### Connection Issues
 ```bash
-./fem-broker --listen :8443
+# Check broker health
+curl -k https://localhost:8443/health
+
+# Verify TLS certificates
+openssl s_client -connect localhost:8443
 ```
 
-### Production Broker
-
+### Embodiment Failures
 ```bash
-./fem-broker \
-  --listen :8443 \
-  --cert /etc/ssl/certs/fem-broker.crt \
-  --key /etc/ssl/private/fem-broker.key \
-  --log-level info
+# Check available bodies
+curl -k -X POST https://localhost:8443/fem \
+  -d '{"type": "discoverBodies", "body": {"query": {"capabilities": ["*"]}}}'
+
+# Monitor broker logs
+tail -f broker.log | grep embodiment
 ```
 
-### Multi-Capability Agent
-
+### Permission Denied
 ```bash
-./fem-coder \
-  --broker https://broker.company.com:8443 \
-  --agent "production-coder-$(hostname)" \
-  --capabilities "code.execute,file.read,file.write,shell.run" \
-  --sandbox-level strict
+# Check security policies
+cat configs/dev-security.json
+
+# Review session permissions  
+tail -f host.log | grep permission
 ```
 
-You now have a working FEP-FEM network! 🎉
+## Get Help
 
-## 🚀 Run the Complete MCP Federation Demo
+- **GitHub Issues**: [Report problems](https://github.com/chazmaniandinkle/FEP-FEM/issues)
+- **Documentation**: [Complete guides](../README.md#documentation) 
+- **Examples**: Run `./demo-embodiment.sh` for comprehensive demos
 
-For a comprehensive demonstration of the MCP federation capabilities, use our included demo script:
+---
 
-```bash
-# Run the complete federation demo
-./demo-mcp-federation.sh
-```
+## What's Different?
 
-This demo:
-1. **Builds** all components (broker and agents)
-2. **Starts** the broker on https://localhost:8443
-3. **Launches** two agents with MCP servers on different ports
-4. **Demonstrates** tool discovery via the broker
-5. **Shows** direct MCP tool calls between agents
-6. **Validates** the complete federation loop
+**Before FEM Protocol:**
+- Static tool integrations
+- Direct function calls
+- No session management
+- Limited security boundaries
 
-### What You'll See
+**With FEM Protocol:**
+- Dynamic embodiment discovery
+- Secure delegated control
+- Time-bounded sessions with audit logging
+- Cryptographic identity and permission enforcement
 
-The demo script will output:
-```
-🚀 Starting FEM MCP Federation Demo
-📦 Building broker and coder...
-🔄 Starting FEM Broker on https://localhost:8443...
-🤖 Starting Agent-1 (calculator) on MCP port 8080...
-🤖 Starting Agent-2 (executor) on MCP port 8081...
-✅ Network is up. Broker and two agents are running.
-🔍 Discovering all 'code.execute' tools via the broker...
-📞 Calling the 'code.execute' tool directly on Agent-2's MCP endpoint...
-🎉 Demo Complete! The full federation loop is working.
-```
+You now have **Secure Hosted Embodiment** working! 🎉
 
-### Manual Testing
-
-You can also test the federation manually:
-
-```bash
-# Discover tools via broker
-curl -k -s -X POST https://localhost:8443/ \
-    -H "Content-Type: application/json" \
-    -d '{
-        "type": "discoverTools",
-        "agent": "test-client",
-        "ts": '$(date +%s%3N)',
-        "nonce": "discover-'$(date +%s)'",
-        "body": {
-            "query": { "capabilities": ["code.execute"] },
-            "requestId": "test-discovery"
-        }
-    }' | jq .
-
-# Call MCP tool directly
-curl -s -X POST http://localhost:8080/mcp \
-    -H "Content-Type: application/json" \
-    -d '{
-        "jsonrpc": "2.0",
-        "method": "tools/call",
-        "params": {
-            "name": "code.execute",
-            "arguments": {
-                "command": "echo Hello from federated MCP tool!"
-            }
-        },
-        "id": 1
-    }' | jq .
-```
-
-This demonstrates the complete FEP-FEM vision: **MCP tools that are discoverable, federated, and secure**.
+The future of AI interaction isn't just about calling functions—it's about minds inhabiting bodies with secure, delegated control.

@@ -1,24 +1,26 @@
-# Security Guide
+# Security Guide: Secure Hosted Embodiment
 
-FEP-FEM implements defense-in-depth security with cryptographic guarantees, sandboxed execution, and capability-based authorization.
+The FEM Protocol implements comprehensive security for **Secure Hosted Embodiment** scenarios with cryptographic guarantees, embodiment session isolation, and capability-based authorization.
 
 ## Table of Contents
 - [Security Model](#security-model)
+- [Embodiment Session Security](#embodiment-session-security)
 - [Cryptographic Security](#cryptographic-security)
 - [Transport Security](#transport-security)
-- [Agent Sandbox Security](#agent-sandbox-security)
-- [Capability Security](#capability-security)
+- [Host Security](#host-security)
+- [Guest Security](#guest-security)
 - [Production Security](#production-security)
 - [Threat Model](#threat-model)
 - [Security Best Practices](#security-best-practices)
 
 ## Security Model
 
-FEP-FEM security is built on three pillars:
+The FEM Protocol security is built on four pillars for hosted embodiment:
 
-1. **Cryptographic Integrity** - All messages are signed and verified
-2. **Capability-Based Authorization** - Fine-grained permission model
-3. **Sandboxed Execution** - Isolated agent runtime environments
+1. **Cryptographic Identity** - All agents have Ed25519 identities with message signing
+2. **Secure Delegated Control** - Hosts delegate specific control to guests within boundaries
+3. **Session Isolation** - Each embodiment session is cryptographically isolated
+4. **Audit Trail** - Complete logging of all actions within embodiment sessions
 
 ### Security Guarantees
 
@@ -26,579 +28,449 @@ FEP-FEM security is built on three pillars:
 ✅ **Message Integrity** - Tampering is cryptographically detectable  
 ✅ **Replay Protection** - Nonces and timestamps prevent replay attacks  
 ✅ **Transport Encryption** - TLS 1.3+ encrypts all network communication  
-✅ **Capability Enforcement** - Agents can only perform authorized actions  
-✅ **Execution Isolation** - Agent code runs in sandboxed environments  
+✅ **Embodiment Isolation** - Sessions are isolated with unique tokens  
+✅ **Permission Enforcement** - Every guest action validated against session permissions  
+✅ **Resource Limiting** - CPU, memory, and disk usage bounded per session  
+✅ **Audit Logging** - Complete trail of all embodiment activities  
+
+## Embodiment Session Security
+
+### Session Token Security
+
+**Session Token Properties**:
+- **256-bit Entropy**: Cryptographically random, unpredictable
+- **Unique Per Session**: No token reuse across embodiment sessions
+- **Time-Bounded**: Automatic expiration with session termination
+- **Permission-Linked**: Token binds to specific guest permissions
+
+**Token Lifecycle**:
+```
+Host grants embodiment → Generate session token → Guest receives token →
+Guest includes token in all tool calls → Host validates token → 
+Session expires → Token becomes invalid
+```
+
+### Permission Model
+
+**Secure Delegated Control** ensures hosts retain ultimate control:
+
+```go
+type SessionPermissions struct {
+    // File system boundaries
+    AllowedPaths     []string `json:"allowedPaths"`
+    DeniedPaths      []string `json:"deniedPaths"`
+    
+    // Command restrictions
+    AllowedCommands  []string `json:"allowedCommands"`
+    DeniedCommands   []string `json:"deniedCommands"`
+    
+    // Resource limits
+    MaxCPUPercent    int      `json:"maxCpuPercent"`
+    MaxMemoryMB      int      `json:"maxMemoryMb"`
+    MaxDiskWriteMB   int      `json:"maxDiskWriteMb"`
+    
+    // Time constraints
+    SessionTimeout   duration `json:"sessionTimeout"`
+    MaxActionsPerHour int     `json:"maxActionsPerHour"`
+}
+```
+
+**Permission Validation**:
+Every guest action is validated:
+1. Session token verification
+2. Action within allowed permissions
+3. Resource limits not exceeded
+4. Time constraints respected
+
+### Session Monitoring
+
+**Real-Time Monitoring**:
+- **Resource Usage**: Continuous CPU, memory, disk tracking
+- **Action Auditing**: Every tool call logged with parameters and results
+- **Violation Detection**: Immediate detection of policy breaches
+- **Health Checking**: Session validity and host availability
+
+**Violation Response**:
+```go
+type ViolationResponse struct {
+    Warning     bool   // Warn guest but continue session
+    Suspend     bool   // Temporarily suspend session
+    Terminate   bool   // Immediately end session
+    Report      bool   // Report to broker for reputation tracking
+}
+```
 
 ## Cryptographic Security
 
 ### Ed25519 Digital Signatures
 
-FEP uses **Ed25519** (EdDSA) for all message signing:
+**Algorithm Properties**:
+- **Key Size**: 32 bytes private key, 32 bytes public key
+- **Signature Size**: 64 bytes
+- **Security Level**: ~128-bit security equivalent
+- **Performance**: ~70,000 signatures/second, ~25,000 verifications/second
 
-```
-Security Level: ~128-bit
-Key Size: 32 bytes (256 bits)
-Signature Size: 64 bytes
-Performance: ~60,000 signatures/second
-```
+**Signing Process for Embodiment**:
+1. **Agent Identity**: Each agent has unique Ed25519 keypair
+2. **Message Signing**: All envelopes signed before transmission
+3. **Session Requests**: Embodiment requests cryptographically authenticated
+4. **Tool Calls**: Every tool call within session includes signature
 
-**Why Ed25519?**
-- Immune to timing attacks
-- Small key and signature sizes
-- Fast verification
-- Mathematically robust (Curve25519)
+### Session Token Generation
 
-### Key Management
-
-#### Agent Key Pairs
-
+**Secure Random Generation**:
 ```go
-// Generate new key pair
-pubKey, privKey, err := ed25519.GenerateKey(rand.Reader)
-
-// Store private key securely
-privKeyBytes := privKey.Seed()
-// Never transmit or log private keys!
-
-// Share public key for verification
-pubKeyB64 := base64.StdEncoding.EncodeToString(pubKey)
-```
-
-#### Key Storage Best Practices
-
-**Development:**
-```bash
-# Store in local file (development only)
-echo "base64-private-key" > ~/.fem/agent.key
-chmod 600 ~/.fem/agent.key
-```
-
-**Production:**
-```bash
-# Use environment variables
-export FEM_AGENT_PRIVATE_KEY="base64-encoded-key"
-
-# Or key management service
-export FEM_KMS_KEY_ID="arn:aws:kms:region:account:key/key-id"
-```
-
-### Signature Process
-
-#### 1. Envelope Creation
-```go
-envelope := &RegisterAgentEnvelope{
-    BaseEnvelope: BaseEnvelope{
-        Type:  "registerAgent",
-        Agent: "my-agent",
-        TS:    time.Now().UnixMilli(),
-        Nonce: generateNonce(),
-    },
-    Body: RegisterAgentBody{
-        PubKey: base64.StdEncoding.EncodeToString(pubKey),
-        Capabilities: []string{"code.execute"},
-    },
-}
-```
-
-#### 2. Signing
-```go
-// Remove any existing signature
-envelope.Sig = ""
-
-// Serialize to canonical JSON
-data, err := json.Marshal(envelope)
-if err != nil {
-    return err
-}
-
-// Generate signature
-signature := ed25519.Sign(privKey, data)
-envelope.Sig = base64.StdEncoding.EncodeToString(signature)
-```
-
-#### 3. Verification
-```go
-// Extract signature
-sig, err := base64.StdEncoding.DecodeString(envelope.Sig)
-if err != nil {
-    return fmt.Errorf("invalid signature encoding")
-}
-
-// Temporarily remove signature for verification
-originalSig := envelope.Sig
-envelope.Sig = ""
-defer func() { envelope.Sig = originalSig }()
-
-// Serialize and verify
-data, err := json.Marshal(envelope)
-if err != nil {
-    return err
-}
-
-if !ed25519.Verify(pubKey, data, sig) {
-    return fmt.Errorf("signature verification failed")
-}
-```
-
-### Replay Protection
-
-#### Nonce Generation
-```go
-func generateNonce() string {
-    // Cryptographically secure random number
-    randomBytes := make([]byte, 16)
-    rand.Read(randomBytes)
-    
-    // Combine with timestamp for uniqueness
-    timestamp := time.Now().UnixNano()
-    return fmt.Sprintf("%d-%x", timestamp, randomBytes)
-}
-```
-
-#### Timestamp Validation
-```go
-func validateTimestamp(ts int64) error {
-    now := time.Now().UnixMilli()
-    maxAge := 5 * 60 * 1000 // 5 minutes in milliseconds
-    
-    if ts > now+maxAge {
-        return fmt.Errorf("envelope from future")
+func generateSessionToken() string {
+    // 256 bits of cryptographic randomness
+    entropy := make([]byte, 32)
+    _, err := rand.Read(entropy)
+    if err != nil {
+        panic("Failed to generate secure random bytes")
     }
     
-    if ts < now-maxAge {
-        return fmt.Errorf("envelope too old")
+    // Base64 encode for transport
+    return base64.URLEncoding.EncodeToString(entropy)
+}
+```
+
+### Signature Verification
+
+**Multi-Layer Verification**:
+1. **Broker Verification**: Verifies agent identity during registration
+2. **Host Verification**: Verifies guest identity during embodiment request
+3. **Session Verification**: Verifies guest signatures for each tool call
+
+## Transport Security
+
+### TLS Requirements
+
+**Minimum Standards**:
+- **TLS Version**: 1.3 or higher required
+- **Certificate Validation**: Full chain validation in production
+- **Cipher Suites**: Only secure, modern ciphers allowed
+- **Perfect Forward Secrecy**: Required for all connections
+
+**Embodiment-Specific Transport**:
+```
+Guest → TLS 1.3+ → Host MCP Endpoint
+• Session token in headers
+• Tool calls over encrypted channel
+• Response data encrypted
+• Session monitoring over secure channel
+```
+
+### Certificate Management
+
+**Development**: Self-signed certificates for local testing
+**Production**: Valid certificates from trusted CA required
+
+```bash
+# Development certificate generation
+openssl req -x509 -newkey rsa:4096 -keyout host.key -out host.crt \
+  -days 365 -nodes -subj "/CN=localhost"
+
+# Production with Let's Encrypt
+certbot certonly --standalone -d your-host.example.com
+```
+
+## Host Security
+
+### Body Definition Security
+
+**Principle of Least Privilege**:
+```go
+// Good: Restrictive body definition
+func createSecureDevBody() BodyDefinition {
+    return BodyDefinition{
+        BodyID: "secure-dev-v1",
+        MCPTools: []MCPToolDef{
+            {Name: "file.read", Constraints: "/workspace/*"},
+            {Name: "shell.execute", Constraints: "safe-commands-only"},
+        },
+        SecurityPolicy: SecurityPolicy{
+            AllowedPaths: []string{"/workspace/*", "/tmp/guest/*"},
+            DeniedCommands: []string{"rm -rf", "sudo", "curl"},
+            ResourceLimits: ResourceLimits{
+                MaxCPUPercent: 25,
+                MaxMemoryMB: 512,
+            },
+        },
+    }
+}
+```
+
+### Input Validation
+
+**Comprehensive Validation**:
+```go
+func validateGuestInput(input string, policy SecurityPolicy) error {
+    // Length validation
+    if len(input) > policy.MaxInputLength {
+        return fmt.Errorf("input too long: %d > %d", len(input), policy.MaxInputLength)
+    }
+    
+    // Path traversal protection
+    if strings.Contains(input, "..") {
+        return fmt.Errorf("path traversal attempt detected")
+    }
+    
+    // Command injection protection
+    dangerousPatterns := []string{";", "&&", "||", "|", "`", "$("}
+    for _, pattern := range dangerousPatterns {
+        if strings.Contains(input, pattern) {
+            return fmt.Errorf("potentially dangerous pattern: %s", pattern)
+        }
     }
     
     return nil
 }
 ```
 
-## Transport Security
+### Resource Isolation
 
-### TLS Configuration
-
-#### Broker TLS Setup
+**Process Sandboxing**:
 ```go
-// Production configuration
-tlsConfig := &tls.Config{
-    MinVersion: tls.VersionTLS13,
-    CipherSuites: []uint16{
-        tls.TLS_AES_256_GCM_SHA384,
-        tls.TLS_CHACHA20_POLY1305_SHA256,
-        tls.TLS_AES_128_GCM_SHA256,
-    },
-    CurvePreferences: []tls.CurveID{
-        tls.X25519,
-        tls.CurveP384,
-        tls.CurveP256,
-    },
-}
-```
-
-#### Certificate Management
-
-**Development:**
-```go
-// Auto-generated self-signed certificate
-cert, err := generateSelfSignedCert()
-tlsConfig.Certificates = []tls.Certificate{cert}
-```
-
-**Production:**
-```bash
-# Use proper CA-signed certificates
-./fem-broker \
-  --listen :8443 \
-  --cert /etc/ssl/certs/fem-broker.crt \
-  --key /etc/ssl/private/fem-broker.key
-```
-
-#### Client Certificate Verification (Optional)
-```go
-tlsConfig.ClientAuth = tls.RequireAndVerifyClientCert
-tlsConfig.ClientCAs = caCertPool
-```
-
-### Network Security
-
-#### Firewall Configuration
-```bash
-# Allow only necessary ports
-ufw allow 8443/tcp  # Broker HTTPS
-ufw deny 8080/tcp   # Block HTTP
-ufw enable
-```
-
-#### Network Isolation
-```yaml
-# Docker network isolation
-version: '3'
-services:
-  fem-broker:
-    networks:
-      - fem-internal
-    ports:
-      - "8443:8443"
-  
-  fem-agent:
-    networks:
-      - fem-internal
-    # No external ports
-
-networks:
-  fem-internal:
-    driver: bridge
-    internal: true
-```
-
-## Agent Sandbox Security
-
-### Process Isolation
-
-#### Container-Based Sandboxing
-```dockerfile
-# Minimal runtime environment
-FROM scratch
-COPY fem-coder /fem-coder
-USER 65534:65534  # nobody:nobody
-ENTRYPOINT ["/fem-coder"]
-```
-
-#### Resource Limits
-```go
-// CPU and memory limits
-cmd := exec.Command("python", script)
-cmd.SysProcAttr = &syscall.SysProcAttr{
-    Setpgid: true,
+type ResourceLimiter struct {
+    MaxCPUPercent int
+    MaxMemoryMB   int
+    MaxProcesses  int
 }
 
-// Set resource limits
-rlimit := syscall.Rlimit{
-    Cur: 100 * 1024 * 1024, // 100MB memory
-    Max: 100 * 1024 * 1024,
-}
-syscall.Setrlimit(syscall.RLIMIT_AS, &rlimit)
-```
-
-### File System Security
-
-#### Restricted File Access
-```go
-type SafeFileSystem struct {
-    allowedPaths []string
-    readOnly     bool
-}
-
-func (fs *SafeFileSystem) ReadFile(path string) ([]byte, error) {
-    if !fs.isAllowed(path) {
-        return nil, fmt.Errorf("access denied: %s", path)
+func (rl *ResourceLimiter) ExecuteWithLimits(cmd string) (*Result, error) {
+    // Create isolated process group
+    cmd := exec.Command("sh", "-c", cmd)
+    cmd.SysProcAttr = &syscall.SysProcAttr{
+        Setpgid: true,
     }
     
-    // Additional path traversal protection
-    cleanPath := filepath.Clean(path)
-    if strings.Contains(cleanPath, "..") {
-        return nil, fmt.Errorf("path traversal attempt")
+    // Apply resource limits
+    cmd.SysProcAttr.Credential = &syscall.Credential{
+        Uid: guestUID,
+        Gid: guestGID,
     }
     
-    return ioutil.ReadFile(cleanPath)
+    // Execute with timeout and monitoring
+    return rl.executeWithMonitoring(cmd)
 }
 ```
 
-#### Temporary Directories
+## Guest Security
+
+### Session Management
+
+**Secure Session Handling**:
 ```go
-// Create isolated temp directory
-tempDir, err := ioutil.TempDir("", "fem-agent-*")
-defer os.RemoveAll(tempDir)
-
-// Restrict to temp directory
-os.Chdir(tempDir)
-```
-
-### Network Restrictions
-
-#### Outbound Connection Filtering
-```go
-// Block network access by default
-func restrictNetwork() error {
-    // Use iptables or similar to block agent network access
-    cmd := exec.Command("iptables", "-A", "OUTPUT", 
-        "-m", "owner", "--uid-owner", "fem-agent",
-        "-j", "REJECT")
-    return cmd.Run()
+type EmbodimentClient struct {
+    sessionToken   string
+    hostEndpoint   string
+    permissions    []string
+    expiryTime     time.Time
+    mcpClient      *MCPClient
+    violated       bool
 }
-```
 
-## Capability Security
-
-### Fine-Grained Permissions
-
-#### Capability Hierarchy
-```
-admin.*                 # Administrative operations
-├── admin.agent.revoke  # Revoke agent access
-├── admin.broker.config # Modify broker config
-└── admin.system.shut   # Shutdown system
-
-code.*                  # Code execution
-├── code.execute        # General code execution
-├── code.python         # Python-specific execution
-└── code.javascript     # JavaScript execution
-
-file.*                  # File operations  
-├── file.read           # Read files
-├── file.read.logs      # Read log files only
-├── file.write          # Write files
-└── file.write.temp     # Write to temp only
-
-shell.*                 # Shell operations
-├── shell.run           # Execute shell commands
-└── shell.read          # Read-only shell access
-```
-
-#### Capability Validation
-```go
-func hasCapability(agent *Agent, required string) bool {
-    for _, cap := range agent.Capabilities {
-        if cap == required {
-            return true
-        }
-        
-        // Check wildcard permissions
-        if strings.HasSuffix(cap, "*") {
-            prefix := strings.TrimSuffix(cap, "*")
-            if strings.HasPrefix(required, prefix) {
-                return true
-            }
-        }
+func (ec *EmbodimentClient) ValidateSession() error {
+    if ec.violated {
+        return fmt.Errorf("session marked as violated")
     }
-    return false
+    
+    if time.Now().After(ec.expiryTime) {
+        return fmt.Errorf("session expired")
+    }
+    
+    if ec.sessionToken == "" {
+        return fmt.Errorf("no valid session token")
+    }
+    
+    return nil
 }
 ```
 
-### JWT-Based Capabilities (Advanced)
+### Error Handling
 
-#### Capability Token Creation
+**Information Disclosure Prevention**:
 ```go
-token := jwt.NewWithClaims(jwt.SigningMethodEdDSA, jwt.MapClaims{
-    "agent": "my-agent",
-    "capabilities": []string{"code.execute", "file.read"},
-    "expires": time.Now().Add(time.Hour).Unix(),
-    "issuer": "fem-broker-001",
-})
-
-tokenString, err := token.SignedString(brokerPrivateKey)
-```
-
-#### Token Validation
-```go
-token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
-    return brokerPublicKey, nil
-})
-
-if claims, ok := token.Claims.(jwt.MapClaims); ok && token.Valid {
-    capabilities := claims["capabilities"].([]string)
-    // Use capabilities for authorization
+func (ec *EmbodimentClient) HandleToolError(err error) error {
+    // Log full error for debugging (if enabled)
+    if debugMode {
+        log.Printf("Tool error: %v", err)
+    }
+    
+    // Return sanitized error to prevent information disclosure
+    switch {
+    case strings.Contains(err.Error(), "permission denied"):
+        return fmt.Errorf("insufficient permissions")
+    case strings.Contains(err.Error(), "resource limit"):
+        return fmt.Errorf("resource limit exceeded")
+    case strings.Contains(err.Error(), "session"):
+        return fmt.Errorf("session error")
+    default:
+        return fmt.Errorf("operation failed")
+    }
 }
 ```
 
 ## Production Security
 
-### Deployment Security
+### Security Configuration
 
-#### Environment Variables
-```bash
-# Never log these
-export FEM_AGENT_PRIVATE_KEY="$(cat /secure/path/agent.key)"
-export FEM_BROKER_TLS_CERT="/etc/ssl/certs/broker.crt"
-export FEM_BROKER_TLS_KEY="/etc/ssl/private/broker.key"
-
-# Restrict file permissions
-chmod 600 /secure/path/agent.key
-chown fem-agent:fem-agent /secure/path/agent.key
+**Production Security Checklist**:
+```yaml
+# production-security.yml
+fem_protocol:
+  security:
+    # Cryptographic settings
+    require_ed25519_signatures: true
+    min_signature_age: 30s
+    max_signature_age: 300s
+    
+    # Session security
+    max_session_duration: 3600s
+    session_token_entropy: 256
+    require_session_renewal: true
+    
+    # Host security
+    enable_resource_limiting: true
+    enable_audit_logging: true
+    max_concurrent_guests: 5
+    
+    # Network security
+    require_tls: true
+    min_tls_version: "1.3"
+    validate_certificates: true
 ```
 
-#### Service Configuration
-```ini
-# systemd service security
-[Service]
-User=fem-broker
-Group=fem-broker
-NoNewPrivileges=yes
-ProtectSystem=strict
-ProtectHome=yes
-PrivateTmp=yes
-DynamicUser=yes
-```
+### Monitoring and Alerting
 
-### Monitoring and Logging
-
-#### Security Event Logging
+**Security Monitoring**:
 ```go
-// Log security events (but never secrets!)
-log.Info("Agent registration attempt", 
-    "agent", envelope.Agent,
-    "ip", r.RemoteAddr,
-    "capabilities", body.Capabilities)
-
-// Log signature failures
-log.Warn("Signature verification failed",
-    "agent", envelope.Agent,
-    "ip", r.RemoteAddr,
-    "envelope_type", envelope.Type)
-```
-
-#### Rate Limiting
-```go
-type RateLimiter struct {
-    requests map[string][]time.Time
-    limit    int
-    window   time.Duration
+type SecurityMonitor struct {
+    violationThreshold  int
+    alertManager       AlertManager
+    auditLogger        AuditLogger
 }
 
-func (rl *RateLimiter) Allow(clientIP string) bool {
-    now := time.Now()
-    
-    // Clean old requests
-    rl.requests[clientIP] = filterRecent(rl.requests[clientIP], 
-        now.Add(-rl.window))
-    
-    if len(rl.requests[clientIP]) >= rl.limit {
-        return false
+func (sm *SecurityMonitor) MonitorSession(session *EmbodimentSession) {
+    // Track violation patterns
+    if session.ViolationCount > sm.violationThreshold {
+        sm.alertManager.SendAlert(AlertCriticalViolations, session)
     }
     
-    rl.requests[clientIP] = append(rl.requests[clientIP], now)
-    return true
+    // Monitor resource abuse
+    if session.ResourceUsage.ExceedsLimits() {
+        sm.alertManager.SendAlert(AlertResourceAbuse, session)
+    }
+    
+    // Track unusual patterns
+    if sm.detectAnomalousActivity(session) {
+        sm.alertManager.SendAlert(AlertAnomalousActivity, session)
+    }
+}
+```
+
+### Audit Logging
+
+**Comprehensive Audit Trail**:
+```go
+type AuditEntry struct {
+    Timestamp     time.Time `json:"timestamp"`
+    SessionToken  string    `json:"sessionToken"`
+    GuestID       string    `json:"guestId"`
+    HostID        string    `json:"hostId"`
+    Action        string    `json:"action"`
+    Parameters    string    `json:"parameters"`
+    Result        string    `json:"result"`
+    Success       bool      `json:"success"`
+    ViolationType string    `json:"violationType,omitempty"`
+}
+
+func (al *AuditLogger) LogAction(session *EmbodimentSession, action string, params map[string]interface{}, result interface{}, success bool) {
+    entry := AuditEntry{
+        Timestamp:    time.Now(),
+        SessionToken: session.SessionToken,
+        GuestID:      session.GuestID,
+        HostID:       session.HostID,
+        Action:       action,
+        Parameters:   encodeParameters(params),
+        Result:       encodeResult(result),
+        Success:      success,
+    }
+    
+    al.writeAuditEntry(entry)
 }
 ```
 
 ## Threat Model
 
-### Threats Addressed
+### Threats and Mitigations
 
-✅ **Message Tampering** - Ed25519 signatures detect any modification  
-✅ **Replay Attacks** - Nonces and timestamps prevent reuse  
-✅ **Man-in-the-Middle** - TLS 1.3 ensures transport security  
-✅ **Unauthorized Access** - Capability system enforces permissions  
-✅ **Code Injection** - Sandboxed execution isolates agent code  
-✅ **Resource Exhaustion** - Resource limits prevent DoS  
+**1. Malicious Guest Agent**
+- **Threat**: Guest attempts to exceed granted permissions
+- **Mitigation**: Real-time permission validation, resource limiting, session termination
 
-### Threats Requiring Additional Mitigation
+**2. Compromised Host**
+- **Threat**: Host provides malicious body definitions
+- **Mitigation**: Guest validation of body definitions, reputation tracking, broker oversight
 
-⚠️ **Compromised Agent Keys** - Rotate keys regularly, use short-lived tokens  
-⚠️ **Broker Compromise** - Use distributed brokers, monitoring  
-⚠️ **Side-Channel Attacks** - Use constant-time implementations  
-⚠️ **Social Engineering** - Train operators, use multi-party controls  
+**3. Session Hijacking**
+- **Threat**: Attacker attempts to use stolen session tokens
+- **Mitigation**: Cryptographic session binding, IP validation, short token lifetimes
 
-### Attack Scenarios
+**4. Resource Exhaustion**
+- **Threat**: Guest consumes excessive host resources
+- **Mitigation**: Strict resource limits, real-time monitoring, automatic termination
 
-#### 1. Malicious Agent Registration
-**Attack**: Attacker tries to register with elevated capabilities  
-**Mitigation**: Capability approval workflow, key verification
+**5. Information Disclosure**
+- **Threat**: Guest accesses unauthorized data
+- **Mitigation**: Path restrictions, file system isolation, permission validation
 
-#### 2. Message Forgery
-**Attack**: Attacker attempts to forge agent messages  
-**Mitigation**: Ed25519 signatures make forgery computationally infeasible
+**6. Command Injection**
+- **Threat**: Guest injects malicious commands
+- **Mitigation**: Input sanitization, command whitelisting, sandboxed execution
 
-#### 3. Replay Attack
-**Attack**: Attacker captures and replays valid messages  
-**Mitigation**: Nonces and timestamp windows prevent replays
+### Trust Boundaries
 
-#### 4. Sandbox Escape
-**Attack**: Agent attempts to escape execution sandbox  
-**Mitigation**: Container isolation, resource limits, restricted syscalls
+```
+┌─────────────────────────────────────────────────────────────┐
+│                    Host Environment                         │
+│  ┌─────────────────────────────────────────────────────┐   │
+│  │              Guest Session                          │   │
+│  │  ┌─────────────────────────────────────────────┐   │   │
+│  │  │         Sandboxed Execution                 │   │   │
+│  │  │  • Resource limits enforced                 │   │   │
+│  │  │  • Path restrictions active                 │   │   │
+│  │  │  • Command filtering enabled                │   │   │
+│  │  └─────────────────────────────────────────────┘   │   │
+│  │  Session Token Required for All Actions            │   │
+│  └─────────────────────────────────────────────────────┘   │
+│  Host retains ultimate control                             │
+└─────────────────────────────────────────────────────────────┘
+```
 
 ## Security Best Practices
 
-### For Operators
+### For Host Developers
 
-1. **Use Strong TLS Certificates**
-   ```bash
-   # Generate strong certificates
-   openssl ecparam -genkey -name secp384r1 -out server.key
-   openssl req -new -x509 -sha256 -key server.key -out server.crt -days 365
-   ```
+1. **Minimize Attack Surface**: Only expose necessary tools in body definitions
+2. **Validate All Inputs**: Never trust guest-provided data
+3. **Implement Resource Limits**: Prevent resource exhaustion attacks
+4. **Monitor Sessions**: Track guest behavior for anomalies
+5. **Audit Everything**: Log all guest actions for security analysis
 
-2. **Rotate Keys Regularly**
-   ```bash
-   # Automated key rotation
-   */0 0 * * 0 /usr/local/bin/rotate-fem-keys.sh
-   ```
+### For Guest Developers
 
-3. **Monitor Security Events**
-   ```bash
-   # Set up log monitoring
-   tail -f /var/log/fem/security.log | grep "SECURITY"
-   ```
+1. **Validate Sessions**: Always check session validity before tool calls
+2. **Handle Errors Gracefully**: Don't expose sensitive information in error messages
+3. **Respect Boundaries**: Stay within granted permissions
+4. **Implement Timeouts**: Handle session expiration gracefully
+5. **Verify Host Identity**: Ensure connecting to legitimate hosts
 
-4. **Network Segmentation**
-   ```yaml
-   # Separate FEM network
-   networks:
-     fem-dmz:
-       driver: bridge
-       ipam:
-         config:
-           - subnet: 172.20.0.0/16
-   ```
+### For Network Operators
 
-### For Developers
+1. **Use TLS Everywhere**: Encrypt all FEM Protocol communications
+2. **Monitor Traffic**: Watch for unusual patterns or attacks
+3. **Update Regularly**: Keep all components updated with security patches
+4. **Implement Rate Limiting**: Prevent abuse of broker services
+5. **Backup Audit Logs**: Ensure audit trails are preserved and protected
 
-1. **Never Log Private Keys**
-   ```go
-   // WRONG
-   log.Debug("Agent key", "key", privKey)
-   
-   // CORRECT  
-   log.Debug("Agent registered", "agent", agentID)
-   ```
-
-2. **Validate All Inputs**
-   ```go
-   if len(envelope.Agent) == 0 || len(envelope.Agent) > 255 {
-       return fmt.Errorf("invalid agent ID length")
-   }
-   ```
-
-3. **Use Secure Random**
-   ```go
-   // Use crypto/rand, never math/rand for security
-   nonce := make([]byte, 32)
-   crypto/rand.Read(nonce)
-   ```
-
-4. **Fail Securely**
-   ```go
-   // Fail closed, not open
-   if err := verifySignature(envelope); err != nil {
-       return fmt.Errorf("access denied")
-   }
-   ```
-
-### For Agent Developers
-
-1. **Minimize Capabilities**
-   ```go
-   // Request only what you need
-   capabilities := []string{"code.execute", "file.read.logs"}
-   ```
-
-2. **Validate Tool Parameters**
-   ```go
-   func executeCode(params map[string]interface{}) error {
-       code, ok := params["code"].(string)
-       if !ok || len(code) > maxCodeLength {
-           return fmt.Errorf("invalid code parameter")
-       }
-   }
-   ```
-
-3. **Handle Errors Securely**
-   ```go
-   // Don't leak sensitive information in errors
-   if err := sensitiveOperation(); err != nil {
-       log.Error("Operation failed", "error", err)
-       return fmt.Errorf("operation failed")
-   }
-   ```
-
-This security model provides strong protection for federated AI agent networks while maintaining usability and performance.
+The FEM Protocol's security model enables powerful collaboration while maintaining strong security boundaries, ensuring that **Secure Hosted Embodiment** remains both functional and safe.
