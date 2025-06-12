@@ -38,20 +38,18 @@ cd fem-v*-windows-amd64/
 ./fem-broker --listen :8443
 
 # Terminal 2: Agent with calculator MCP tools
-./fem-coder --broker https://localhost:8443 --agent calculator \
-  --mcp-server :3001 --mcp-tools "math.add,math.multiply,math.divide"
+./fem-coder --broker https://localhost:8443 --agent calculator-001 --mcp-port 8080
 
-# Terminal 3: Agent with file processing MCP tools  
-./fem-coder --broker https://localhost:8443 --agent file-processor \
-  --mcp-server :3002 --mcp-tools "file.read,file.write,file.compress"
+# Terminal 3: Agent with file processing tools  
+./fem-coder --broker https://localhost:8443 --agent processor-001 --mcp-port 8081
 
 # ✨ Now any agent can discover and use tools from other agents!
 ```
 
 **What just happened?**
 - Broker coordinates MCP tool discovery across the network
-- Calculator agent exposes math tools via MCP server on port 3001
-- File processor exposes file tools via MCP server on port 3002
+- Calculator agent exposes `code.execute` and `shell.run` tools via MCP server on port 8080
+- Processor agent exposes the same tools via MCP server on port 8081  
 - Both agents can discover and use each other's tools through FEP federation
 
 ## Option 2: Build from Source
@@ -377,3 +375,72 @@ Agent automatically adapts tools when environment changes:
 ```
 
 You now have a working FEP-FEM network! 🎉
+
+## 🚀 Run the Complete MCP Federation Demo
+
+For a comprehensive demonstration of the MCP federation capabilities, use our included demo script:
+
+```bash
+# Run the complete federation demo
+./demo-mcp-federation.sh
+```
+
+This demo:
+1. **Builds** all components (broker and agents)
+2. **Starts** the broker on https://localhost:8443
+3. **Launches** two agents with MCP servers on different ports
+4. **Demonstrates** tool discovery via the broker
+5. **Shows** direct MCP tool calls between agents
+6. **Validates** the complete federation loop
+
+### What You'll See
+
+The demo script will output:
+```
+🚀 Starting FEM MCP Federation Demo
+📦 Building broker and coder...
+🔄 Starting FEM Broker on https://localhost:8443...
+🤖 Starting Agent-1 (calculator) on MCP port 8080...
+🤖 Starting Agent-2 (executor) on MCP port 8081...
+✅ Network is up. Broker and two agents are running.
+🔍 Discovering all 'code.execute' tools via the broker...
+📞 Calling the 'code.execute' tool directly on Agent-2's MCP endpoint...
+🎉 Demo Complete! The full federation loop is working.
+```
+
+### Manual Testing
+
+You can also test the federation manually:
+
+```bash
+# Discover tools via broker
+curl -k -s -X POST https://localhost:8443/ \
+    -H "Content-Type: application/json" \
+    -d '{
+        "type": "discoverTools",
+        "agent": "test-client",
+        "ts": '$(date +%s%3N)',
+        "nonce": "discover-'$(date +%s)'",
+        "body": {
+            "query": { "capabilities": ["code.execute"] },
+            "requestId": "test-discovery"
+        }
+    }' | jq .
+
+# Call MCP tool directly
+curl -s -X POST http://localhost:8080/mcp \
+    -H "Content-Type: application/json" \
+    -d '{
+        "jsonrpc": "2.0",
+        "method": "tools/call",
+        "params": {
+            "name": "code.execute",
+            "arguments": {
+                "command": "echo Hello from federated MCP tool!"
+            }
+        },
+        "id": 1
+    }' | jq .
+```
+
+This demonstrates the complete FEP-FEM vision: **MCP tools that are discoverable, federated, and secure**.
