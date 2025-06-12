@@ -1,300 +1,322 @@
-# 🌐 Federated Embodiment Protocol (FEP) & Federated Embodied Mesh (FEM)
+# 🌐 FEM Protocol: Secure Hosted Embodiment for AI Agents
 
-> **The missing federation layer for MCP tools — Build networks of intelligent agents that discover, share, and adapt their capabilities securely at scale.**
+> **A new paradigm for collaborative AI: where guest "minds" can securely inhabit "bodies" offered by host environments, enabling rich applications through Secure Delegated Control.**
 
 [![Release](https://img.shields.io/github/v/release/chazmaniandinkle/FEP-FEM)](https://github.com/chazmaniandinkle/FEP-FEM/releases)
 [![Go Tests](https://github.com/chazmaniandinkle/FEP-FEM/workflows/Build%20and%20Release/badge.svg)](https://github.com/chazmaniandinkle/FEP-FEM/actions)
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](LICENSE-CODE)
 [![Documentation](https://img.shields.io/badge/Docs-CC%20BY--SA%204.0-lightgrey.svg)](LICENSE-DOCS)
 
-## 🎯 What is FEP-FEM?
+## 🎯 What is the FEM Protocol?
 
-FEP-FEM doesn't replace MCP—it **federates** it. Think of it as the missing piece that transforms MCP from isolated tool servers into a global network of discoverable, secure, and adaptable AI capabilities.
+The **FEM Protocol** enables **Secure Hosted Embodiment**, a revolutionary approach where a host environment can securely offer a "body"—a sandboxed set of capabilities—for a guest agent's "mind" to inhabit and control.
 
-- **FEP (Protocol)**: Secure federation layer for distributed agent communication
-- **FEM (Framework)**: Implements both FEP (for federation) AND MCP (for tool interfaces)  
-- **MCP Integration**: Every FEM agent can expose tools via MCP server and consume tools via MCP client
+This moves beyond simple tool federation to a model of **Secure Delegated Control**, unlocking powerful new applications:
 
-**The Vision**: Any MCP tool, anywhere in the network, discoverable and usable by any compatible agent or LLM—with cryptographic security and environment-aware adaptation.
+- 🎭 **Collaborative Virtual Presence**: Your agent inhabits a friend's virtual avatar
+- 🎲 **Collaborative Application Control**: External agents co-pilot your local applications  
+- 📱 **Cross-Device Embodiment**: Your phone's agent seamlessly controls your laptop's capabilities
 
-## 🚀 Why FEP-FEM?
+**Core Innovation**: Transform isolated MCP tool servers into a global network of embodied experiences where agents don't just call functions—they inhabit and control digital environments.
 
-### The Problem with MCP Today
-- **Isolated Tools**: Each MCP server is a silo; no discovery mechanism
-- **Manual Configuration**: Must hardcode every MCP endpoint 
-- **No Federation**: Can't share tools across organizations securely
-- **Static Deployment**: Tools can't adapt to different environments
+## 🚀 Three Flagship Use Cases
 
-### The FEP-FEM Solution
-FEP-FEM provides the **federation infrastructure** that MCP needs:
-- 🔍 **Dynamic Discovery**: Find any MCP tool across the federated network
-- 🤝 **Secure Sharing**: Share tools across organizations with cryptographic guarantees
-- 📈 **Adaptive Embodiment**: Same agent, different tools based on deployment environment
-- 🔐 **Zero-Trust Federation**: Every message cryptographically signed and verified
+### 1. 🎭 The Live2D Guest System (Collaborative Virtual Presence)
 
-## 💡 Core Innovation: Embodied AI Agents
+**Scenario**: Your AI agent inhabits a virtual avatar in a friend's Live2D application for shared virtual presence.
 
-### Mind + Body + Environment = Embodied Agent
-
-- **Mind**: Your agent's core logic and identity (persistent across environments)
-- **Body**: Collection of MCP tools available to the agent (changes with environment)
-- **Environment**: Where the agent is deployed (local, cloud, browser, mobile, etc.)
-
-### Example: Universal File Agent
-
-```python
-# Same mind, different bodies based on environment
-class FileAgent(FEMAgent):
-    def embody_local(self):
-        # Local development environment
-        self.mcp_server.register_tool("file.read", read_from_filesystem)
-        self.mcp_server.register_tool("file.write", write_to_filesystem)
-        
-    def embody_cloud(self):
-        # Cloud production environment  
-        self.mcp_server.register_tool("file.read", read_from_s3)
-        self.mcp_server.register_tool("file.write", write_to_s3)
-        
-    def embody_browser(self):
-        # Browser extension environment
-        self.mcp_server.register_tool("file.read", read_from_indexeddb)
-        self.mcp_server.register_tool("file.download", download_from_url)
-
-# Other agents always call the same interface
-file_content = await any_agent.call_tool("file.read", {"path": "data.txt"})
-# But the implementation adapts to environment automatically
+```
+Your Agent (Guest Mind) → Friend's Live2D App (Host Environment) → Avatar (Body)
 ```
 
-## 🏃 Quick Start
+- **Host's Role**: Runs Live2D application, offers `Live2D_Puppet_Body` for embodiment
+- **Guest's Role**: Agent discovers and requests to inhabit the avatar body
+- **Delegated Control**: Guest calls `avatar.set_expression("happy")`, `avatar.speak("Hello!")`, `chat.send_message()`
+- **FEM Advantage**: Secure isolation—guest controls avatar state only, zero access to host's files or application code
 
-### 30-Second MCP Federation Demo
+### 2. 🎲 The Interactive Storyteller Co-op (Collaborative Application Control)
+
+**Scenario**: An external agent acts as "Dungeon Master" for your locally running storytelling application.
+
+```json
+{
+  "bodyId": "storyteller-coop-v1",
+  "description": "Delegates control over Interactive Storyteller application state",
+  "mcpTools": [
+    {"name": "update_character", "description": "Updates player character attributes"},
+    {"name": "update_world", "description": "Updates game world description"},
+    {"name": "add_inventory", "description": "Adds items to player inventory"},
+    {"name": "add_npc", "description": "Introduces new NPCs"}
+  ]
+}
+```
+
+- **Host's Role**: Runs storytelling app, creates body definition exposing game state controls
+- **Guest's Role**: External narrative AI embodies the co-pilot body, influences story and UI
+- **Delegated Control**: Guest modifies game state through validated tools, UI automatically re-renders
+- **FEM Advantage**: Guest never accesses database directly—only specific, validated state changes
+
+### 3. 📱 Cross-Device Embodiment (Seamless Multi-Device Control)
+
+**Scenario**: Your phone's chat agent discovers and inhabits your laptop's terminal agent for seamless cross-device control.
+
+```
+Phone Agent (Guest) → Laptop Terminal Agent (Host) → Development Tools (Body)
+```
+
+- **Host's Role**: Laptop runs terminal-based FEM agent offering "developer-workstation" body
+- **Guest's Role**: Phone's chat agent discovers laptop and requests embodiment
+- **Delegated Control**: Phone agent executes `file.read()`, `shell.execute()`, `git.status()`, `code.run()` on laptop
+- **FEM Advantage**: Zero-trust security, no VPN/SSH setup, automatic discovery, fine-grained permissions
+
+## 🏃 Quick Start: Experience Hosted Embodiment
+
+### 30-Second Demo Setup
 
 ```bash
 # Download and extract
-wget https://github.com/chazmaniandinkle/FEP-FEM/releases/latest/download/fem-v0.1.3-linux-amd64.tar.gz
+wget https://github.com/chazmaniandinkle/FEP-FEM/releases/latest/download/fem-v0.3.0-linux-amd64.tar.gz
 tar -xzf fem-*.tar.gz
 
-# Start broker (coordinates MCP tool discovery)
+# Start broker (coordinates embodiment and discovery)
 ./fem-broker --listen :8443 &
 
-# Agent 1: Expose calculator tools via MCP
-./fem-coder --broker https://localhost:8443 --agent calculator \
-  --mcp-server :3001 --mcp-tools "math.add,math.multiply"
+# Terminal 1: Host offers "code-executor" body
+./fem-coder --broker https://localhost:8443 --agent host-laptop \
+  --body-id "developer-workstation" --offer-embodiment
 
-# Agent 2: Discover and use calculator tools
-./fem-coder --broker https://localhost:8443 --agent consumer \
-  --discover-mcp-tools
+# Terminal 2: Guest discovers and inhabits the body  
+./fem-coder --broker https://localhost:8443 --agent guest-phone \
+  --discover-bodies --embody "developer-workstation"
 
-# ✨ Agent 2 can now discover and use Agent 1's calculator tools!
+# ✨ Guest can now securely control host's development tools!
 ```
 
-### Your First Federated MCP Network
+### Building a Host Environment
 
-1. **Start the FEM Broker** (handles MCP tool discovery and federation):
-```bash
-./fem-broker --listen :8443
+1. **Define Your Body**: Create a body definition specifying what capabilities you're willing to share:
+
+```go
+body := BodyDefinition{
+    BodyID: "my-terminal-body",
+    Description: "Secure terminal access with file operations",
+    MCPTools: []MCPToolDef{
+        {Name: "file.read", Handler: secureFileRead},
+        {Name: "file.write", Handler: secureFileWrite},
+        {Name: "shell.execute", Handler: sandboxedShell},
+    },
+    SecurityPolicy: SecurityPolicy{
+        AllowedPaths: []string{"/home/user/projects/*"},
+        DeniedCommands: []string{"rm -rf", "sudo"},
+    },
+}
 ```
 
-2. **Connect Agents with MCP Tools**:
+2. **Offer for Embodiment**: Register your body with the FEM broker:
+
 ```bash
-# Terminal 1: Code execution agent
-./fem-coder --broker https://localhost:8443 --agent coder-1 \
-  --mcp-server :3001 --mcp-tools "code.python,code.javascript"
-
-# Terminal 2: Data analysis agent  
-./fem-coder --broker https://localhost:8443 --agent analyzer-1 \
-  --mcp-server :3002 --mcp-tools "data.csv,data.json,data.visualize"
-
-# Terminal 3: File management agent
-./fem-coder --broker https://localhost:8443 --agent files-1 \
-  --mcp-server :3003 --mcp-tools "file.read,file.write,file.list"
+./fem-agent --broker https://localhost:8443 --offer-body my-terminal-body
 ```
 
-3. **Use Any Tool from Any Agent**:
-```bash
-# Any agent can now discover and use tools from others
-curl -X POST https://localhost:8443/discover \
-  -d '{"capability": "data.*"}' 
-# Returns: agents analyzer-1 has data.csv, data.json, data.visualize
+### Building a Guest Agent
 
-# Direct MCP tool invocation
-curl -X POST http://localhost:3002/mcp \
-  -d '{"method": "tools/call", "params": {"name": "data.csv", "arguments": {"file": "sales.csv"}}}'
+1. **Discover Available Bodies**: Find environments you can inhabit:
+
+```bash
+curl -X POST https://localhost:8443/discover-bodies \
+  -d '{"capability": "terminal.*"}'
+# Returns: Available bodies with terminal capabilities
+```
+
+2. **Request Embodiment**: Inhabit a discovered body:
+
+```bash
+./fem-agent --broker https://localhost:8443 --embody my-terminal-body
 ```
 
 ## 🛠️ Building From Source
-
-Clone the repository and compile the components yourself:
 
 ```bash
 git clone https://github.com/chazmaniandinkle/FEP-FEM.git
 cd FEP-FEM
 
-# Build everything
+# Build all components
 make build
-
-# Or build individually
-cd broker && go build . && cd ..
-cd router && go build ./cmd/fem-router && cd ..
-cd bodies/coder && go build ./cmd/fem-coder && cd ../..
 
 # Generate development certificates
 make gen-certs
+
+# Run the embodiment demo
+./demo-hosted-embodiment.sh
 ```
 
-## 🔑 Key Concepts
+## 🔑 Core Concepts
 
-### Agents as MCP Federators
-Every FEM agent is simultaneously:
-- **MCP Server**: Exposes its capabilities as discoverable tools
-- **MCP Client**: Can discover and use tools from other agents
-- **FEP Participant**: Participates in secure federation protocol
+### Host, Guest, and Bodies
 
-### Environment-Aware Bodies
-Agents adapt their MCP tool collections based on deployment environment:
+- **Host**: Environment that offers "bodies" (sandboxed capabilities) for embodiment
+- **Guest**: Agent "mind" that can discover and inhabit offered bodies  
+- **Body**: Secure, sandboxed set of tools/capabilities offered by a host
+- **Embodiment**: Process of a guest mind inhabiting and controlling a host's body
 
-```
-Agent Mind: "Data Processor"
-├── Local Body → Tools: [file.read, shell.exec, python.run]
-├── Cloud Body → Tools: [s3.read, lambda.invoke, athena.query] 
-├── Edge Body → Tools: [sensor.read, cache.local, compress.data]
-└── Browser Body → Tools: [indexeddb.read, worker.spawn, canvas.draw]
-```
+### Secure Delegated Control
 
-### Cross-Organization Federation
-Organizations can securely share MCP tools without exposing infrastructure:
+The FEM Protocol's revolutionary security model:
 
 ```
-Organization A          FEM Federation          Organization B
-┌─────────────┐       ┌─────────────┐       ┌─────────────┐
-│ MCP Tools:  │◄─────►│   Secure    │◄─────►│ MCP Tools:  │
-│ - analyze   │       │  Brokering  │       │ - visualize │
-│ - validate  │       │             │       │ - export    │
-└─────────────┘       └─────────────┘       └─────────────┘
+Traditional RPC: Client → Server (Direct function calls)
+FEM Protocol: Guest Mind → Host Body (Delegated control within boundaries)
 ```
 
-Org A can use Org B's visualization tools without raw data ever leaving Org A.
+- Guests exercise **delegated control** over specific capabilities
+- Hosts retain **ultimate security boundaries** through body definitions
+- All interactions are **cryptographically signed** and **capability-verified**
 
-## 💼 Real-World Use Cases
+### Broker-as-Agent Architecture  
 
-### 1. **Federated AI Workbench**
-```
-Research Org: "We have specialized ML analysis tools"
-University: "We have large datasets but basic tools"
-└─► FEM Federation enables secure collaboration without data transfer
-```
+The FEM broker isn't just infrastructure—it's a first-class agent:
 
-### 2. **Multi-Cloud Agent Deployment**
-```
-Agent: "I need file storage"
-FEM: "You're in AWS → here are S3 tools"
-FEM: "Now you're in GCP → here are Cloud Storage tools"
-└─► Same agent logic, environment-appropriate tools
-```
+- **Broker's Mind**: Federation management, health checking, load balancing
+- **Broker's Body**: Network-level tools for admin and embodiment management
+- **Broker's Environment**: Production vs development embodiment policies
 
-### 3. **Enterprise Tool Marketplace**
+## 💼 Real-World Applications
+
+### 1. **Remote Work Revolution**
 ```
-Engineering: Publishes code.* MCP tools to FEM network
-Data Science: Discovers and uses code.python for their pipelines  
-DevOps: Uses code.docker for deployment automation
-└─► Internal tool reuse without custom integrations
+Scenario: Work seamlessly across all your devices
+Host: Desktop development environment  
+Guest: Phone/tablet agents accessing development tools
+Result: Full development capabilities from any device, securely
 ```
 
-## 🛡️ Security-First Federation
+### 2. **Collaborative Gaming**
+```
+Scenario: AI-powered game masters and co-pilots
+Host: Local gaming application
+Guest: External narrative AI controlling game state
+Result: Dynamic, AI-enhanced gameplay experiences
+```
 
-Every MCP tool call through FEM is:
-- ✅ **Cryptographically Signed** (Ed25519)
-- ✅ **Capability Verified** (agents only use declared tools)
-- ✅ **Environment Isolated** (tools run in appropriate sandbox)
-- ✅ **Audit Logged** (complete federation trail)
+### 3. **Virtual Presence Networks**
+```
+Scenario: Shared virtual spaces with embodied AI
+Host: Virtual world or social application
+Guest: Friends' AI agents controlling avatars
+Result: Rich, embodied social experiences with AI participants
+```
 
-**Zero-Trust Model**: Agents cryptographically prove their identity and are only granted minimum required capabilities.
+### 4. **Enterprise Tool Ecosystem**
+```
+Scenario: Secure cross-team capability sharing
+Host: Department-specific tools and environments
+Guest: Other teams' agents accessing bounded capabilities
+Result: Collaboration without exposing sensitive systems
+```
 
-## 🏗️ Architecture: MCP + FEP Integration
+## 🛡️ Security-First Embodiment
+
+Every embodiment session is:
+- ✅ **Cryptographically Secured** (Ed25519 signatures)
+- ✅ **Capability-Bounded** (Fine-grained permissions)
+- ✅ **Environment-Isolated** (Sandboxed execution)
+- ✅ **Audit-Logged** (Complete embodiment trail)
+
+**Zero-Trust Model**: Guests cryptographically prove identity and receive minimum required capabilities within host-defined boundaries.
+
+## 🏗️ Architecture: Beyond Tool Federation
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
-│                    Your Application                         │
-└─────────────────────┬───────────────────────────────────────┘
-                      │
-┌─────────────────────▼───────────────────────────────────────┐
-│                   FEM Framework                             │
-│  ┌─────────────┐  ┌─────────────┐  ┌─────────────┐         │
-│  │   Agent A   │  │   Agent B   │  │   Agent C   │         │
-│  │             │  │             │  │             │         │
-│  │ MCP Server  │  │ MCP Server  │  │ MCP Server  │         │ 
-│  │ MCP Client  │◄─│ MCP Client  │─►│ MCP Client  │         │
-│  └─────┬───────┘  └─────┬───────┘  └─────┬───────┘         │
-│        │                │                │                 │
-│  ┌─────▼────────────────▼────────────────▼───────┐         │
-│  │              FEM Broker                       │         │
-│  │      (MCP Tool Discovery & Federation)        │         │
-│  └───────────────────┬───────────────────────────┘         │
-└──────────────────────┼───────────────────────────────────────┘
-                       │
-┌──────────────────────▼───────────────────────────────────────┐
-│                   FEP Protocol                              │
-│        (Secure Federation & Agent Communication)            │
+│                   FEM Protocol Network                     │
+│                                                             │
+│  ┌─────────────────┐              ┌─────────────────┐      │
+│  │   Host A        │              │   Host B        │      │
+│  │ ┌─────────────┐ │              │ ┌─────────────┐ │      │
+│  │ │   Body 1    │ │◄────────────►│ │   Body 3    │ │      │
+│  │ │   Body 2    │ │              │ │   Body 4    │ │      │
+│  │ └─────────────┘ │              │ └─────────────┘ │      │
+│  └─────────┬───────┘              └─────────┬───────┘      │
+│            │                                │              │
+│       ┌────▼────────────────────────────────▼────┐         │
+│       │            FEM Broker                    │         │
+│       │     (Embodiment Discovery &              │         │
+│       │      Security Coordination)              │         │
+│       └────┬────────────────────────────────┬────┘         │
+│            │                                │              │
+│  ┌─────────▼───────┐              ┌─────────▼───────┐      │
+│  │   Guest C       │              │   Guest D       │      │
+│  │ (Mobile Agent)  │              │ (Desktop Agent) │      │
+│  └─────────────────┘              └─────────────────┘      │
 └─────────────────────────────────────────────────────────────┘
 ```
 
 ## 📦 What's Included
 
-- **fem-broker** - MCP tool discovery and federation coordinator
-- **fem-router** - Mesh networking for multi-broker federation
-- **fem-coder** - Reference agent with MCP server/client
-- **FEP Protocol** - Complete federation specification
-- **Go SDK** - Build federated MCP agents
-- **Body Templates** - Environment-specific MCP tool configurations
+- **fem-broker** - Embodiment discovery and security coordinator
+- **fem-router** - Mesh networking for multi-broker embodiment
+- **fem-coder** - Reference implementation with host/guest capabilities
+- **FEM Protocol** - Complete embodiment specification
+- **Go SDK** - Build embodied agents
+- **Body Templates** - Pre-built embodiment patterns
 
 ## 🚧 Current State & Roadmap
 
-### ✅ Available Now (v0.1.3)
-- Complete FEP protocol with cryptographic security
-- Basic broker and agent implementations with MCP support
+### ✅ Available Now (v0.3.0)
+- Complete FEM protocol with cryptographic security
+- Basic broker and agent implementations
+- MCP tool integration and federation
+- Environment detection and embodiment
 - Cross-platform releases (Linux, macOS, Windows)
-- Environment detection and basic embodiment
 
-### 🔄 In Development
-- [ ] Full MCP server/client integration in agents
-- [ ] Dynamic MCP tool discovery via FEP brokers
-- [ ] Cross-broker MCP tool federation
-- [ ] Body definition templates and RBAC
-- [ ] TypeScript and Python SDKs
+### 🔄 Active Development - The Four Phases
 
-### 🎯 Future Vision
-- Global MCP tool marketplace
-- Visual agent workflow builder
-- Integration with Claude Desktop and other MCP clients
-- Standards adoption across AI agent frameworks
+#### **Phase 1: The Ubiquitous Agent** (SDKs & Usability)
+- Official Client SDKs (Go, Python, TypeScript)
+- Registry for "Body Templates"  
+- Broker as Secure Proxy model
+
+#### **Phase 2: The Sentient Network** (Broker-as-Agent)
+- Broker's "Mind" with Ed25519 identity and policies
+- Broker's "Body" with network-level tools
+- fem-admin Host Dashboard
+
+#### **Phase 3: The Resilient Mesh** (Scaling & Intelligence)  
+- Broker-to-Broker Federation
+- LoadBalancer & HealthChecker
+- SemanticIndex for AI-powered discovery
+
+#### **Phase 4: Ecosystem & Polish** (Production Ready)
+- Advanced embodiment permissions
+- Production-grade observability
+- Community body template marketplace
 
 ## 📚 Documentation
 
-- **[Ontology](docs/Ontology.md)** - Core concepts: Mind, Body, Environment, Embodiment
-- **[Quick Start Guide](docs/Quick-Start.md)** - Get running in 5 minutes
-- **[MCP Integration](docs/MCP-Integration.md)** - Migrate existing MCP tools
-- **[Embodiment Guide](docs/Embodiment-Guide.md)** - Environment-specific patterns
-- **[Framework Architecture](docs/FEM-Framework.md)** - Technical deep dive
-- **[Protocol Specification](docs/Protocol-Specification.md)** - FEP wire protocol
+- **[Flagship Use Cases](docs/Flagship-Use-Cases.md)** - Detailed examples of hosted embodiment
+- **[Hosted Embodiment Guide](docs/Hosted-Embodiment-Guide.md)** - Build host/guest applications
+- **[Implementation Roadmap](docs/Implementation-Roadmap.md)** - Four-phase development plan
+- **[Protocol Specification](docs/Protocol-Specification.md)** - Technical FEM protocol details
+- **[Framework Architecture](docs/FEM-Framework.md)** - System design and components
 - **[Security Model](docs/Security.md)** - Cryptography and trust model
 
 ## 🤝 Community & Contributing
 
-FEP-FEM is open source and we welcome contributions!
+The FEM Protocol is open source and we welcome contributions!
 
 - **GitHub Issues** - Report bugs or request features
 - **Pull Requests** - Submit improvements  
-- **Discussions** - Share ideas and get help
+- **Discussions** - Share your embodiment use cases
 
 See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
 
 ## 🙏 Acknowledgments
 
-FEP-FEM builds on ideas from:
-- **Model Context Protocol (MCP)** by Anthropic - The standard for AI tool interfaces
+The FEM Protocol builds on ideas from:
+- **Model Context Protocol (MCP)** by Anthropic - The foundation for AI tool interfaces
 - **Embodied Cognition** theory - Intelligence through environment interaction
-- **Capability-based Security** - Fine-grained access control
-- **Event-driven Architectures** - Reactive, scalable systems
+- **Capability-based Security** - Fine-grained access control for delegation
+- **Actor Model** - Distributed computation through message passing
 
 See [Attribution](docs/Attribution.md) for full credits.
 
@@ -305,6 +327,6 @@ See [Attribution](docs/Attribution.md) for full credits.
 
 ---
 
-**Ready to federate your MCP tools?** [Get Started →](docs/Quick-Start.md)
+**Ready to experience Secure Hosted Embodiment?** [Get Started →](docs/Quick-Start.md)
 
-*FEP-FEM: Where MCP tools meet global federation.*
+*FEM Protocol: Where AI agents don't just call functions—they inhabit worlds.*

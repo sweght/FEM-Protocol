@@ -1,10 +1,11 @@
-# Federated Embodiment Protocol (FEP) Specification
+# FEM Protocol Specification
 
 ## Table of Contents
 - [Overview](#overview)
 - [Protocol Fundamentals](#protocol-fundamentals)
 - [Message Envelopes](#message-envelopes)
 - [Security Model](#security-model)
+- [Embodiment Framework](#embodiment-framework)
 - [Transport Layer](#transport-layer)
 - [Agent Lifecycle](#agent-lifecycle)
 - [Broker Operations](#broker-operations)
@@ -13,58 +14,84 @@
 
 ## Overview
 
-The Federated Embodiment Protocol (FEP) is a wire-level protocol designed for secure communication between autonomous AI agents in a federated network. FEP enables agents to register with brokers, emit events, execute tools, and collaborate across distributed systems while maintaining cryptographic security and capability-based authorization.
+The **FEM Protocol** is a wire-level protocol designed for **Secure Hosted Embodiment** between AI agents in a federated network. The protocol enables a revolutionary paradigm where guest "minds" can securely inhabit "bodies" offered by host environments, creating a model of **Secure Delegated Control**.
 
-**Key Integration**: FEP works in conjunction with the Model Context Protocol (MCP) to provide federation capabilities for MCP tools. While MCP defines how agents expose and consume tools, FEP provides the discovery, routing, and federation infrastructure that enables MCP tools to be shared securely across organizational boundaries.
+**Core Innovation**: FEM Protocol moves beyond simple tool federation to enable persistent embodiment sessions where guests exercise delegated control over host-defined capabilities within cryptographically enforced security boundaries.
 
 ### Key Design Principles
 
-1. **Decentralization**: No single point of control; agents can communicate across multiple brokers
-2. **Security-First**: All messages are cryptographically signed using Ed25519
-3. **Capability-Based**: Agents declare and are granted specific capabilities
-4. **Transport Agnostic**: Works over any reliable transport (HTTPS, WebSockets, etc.)
-5. **Extensible**: New envelope types and capabilities can be added
-6. **Federated**: Brokers can connect to form larger networks
-7. **MCP Compatible**: Seamlessly integrates with existing MCP tool ecosystems
-8. **Environment Aware**: Supports adaptive agent embodiment across deployment contexts
+1. **Hosted Embodiment**: Guests can inhabit and control host-offered bodies (capability sets)
+2. **Secure Delegated Control**: Hosts delegate specific control to guests within defined boundaries
+3. **Cryptographic Security**: All interactions are Ed25519 signed with fine-grained permissions
+4. **Broker-as-Agent**: Brokers are first-class agents with their own mind, body, and environment
+5. **MCP Integration**: Seamless integration with Model Context Protocol for tool interfaces
+6. **Environment Awareness**: Bodies adapt to deployment environments (local, cloud, edge, etc.)
+7. **Federation**: Multi-broker networks enable cross-organizational embodiment
+8. **Zero-Trust**: Cryptographic proof of identity required for all embodiment sessions
 
 ### Protocol Version
 
-Current version: **v0.1.2**
+Current version: **v0.3.0**
 
 ## Protocol Fundamentals
 
 ### Core Concepts
 
-**Agent**: An autonomous entity that can execute code, process data, or perform other computational tasks. Agents have unique identifiers and declare their capabilities upon registration. Each agent can simultaneously operate as both an MCP server (providing tools) and MCP client (consuming tools).
+**Host**: An agent that offers "bodies" (sandboxed capability sets) for guest embodiment. Hosts define security boundaries and retain ultimate control over their environment.
 
-**Broker**: A network node that facilitates communication between agents. Brokers handle message routing, capability matching, MCP tool discovery, and federation with other brokers.
+**Guest**: An agent "mind" that can discover and inhabit bodies offered by hosts, exercising delegated control within host-defined boundaries.
 
-**Envelope**: A structured message format that wraps all FEP communications. Each envelope contains headers, body, and cryptographic signature.
+**Body**: A secure, sandboxed set of MCP tools and capabilities offered by a host for guest embodiment. Bodies define what a guest can control.
 
-**Capability**: A declared ability of an agent (e.g., "code.execute", "file.read", "chat.respond"). Capabilities enable fine-grained access control and correspond to MCP tools that the agent can provide.
+**Embodiment**: The process by which a guest mind inhabits a host body, establishing a persistent session with delegated control capabilities.
 
-**Federation**: The process of connecting multiple brokers to form a larger network, allowing agents on different brokers to interact and share MCP tools.
+**Broker**: A first-class agent that coordinates embodiment discovery, security verification, and federation. Brokers have their own mind (logic), body (network tools), and environment (deployment context).
 
-**Body Definition**: A specification that defines what MCP tools an agent should expose when embodied in a specific environment type (e.g., local development, cloud production, edge device).
+**Envelope**: A structured, cryptographically signed message format for all FEM Protocol communications.
 
-**Embodiment**: The process by which an agent adapts its collection of MCP tools based on its deployment environment, creating an optimized tool set for its operational context.
+**Security Policy**: Host-defined rules that govern what guests can do within an embodied session (file paths, commands, resources, time limits).
 
-**MCP Endpoint**: The HTTP endpoint where an agent exposes its MCP server, allowing other agents to discover and invoke its tools using standard MCP protocol.
+**Embodiment Session**: A time-bounded period during which a guest has active control over a host body, with all actions logged and audited.
+
+### The Three Flagship Use Cases
+
+**1. Collaborative Virtual Presence (Live2D Guest System)**
+```
+Guest Agent → Live2D Host → Avatar Body
+• Guest calls: avatar.set_expression("happy")
+• Host validates and applies to avatar state
+• Security: Guest controls avatar only, no file system access
+```
+
+**2. Collaborative Application Control (Interactive Storyteller)**
+```
+Guest Narrative AI → Storytelling Host → Game State Body
+• Guest calls: update_world("A mysterious fog rolls in...")
+• Host validates and updates game state, UI re-renders
+• Security: Guest modifies game state only through defined tools
+```
+
+**3. Cross-Device Embodiment (Phone ↔ Laptop)**
+```
+Phone Guest → Laptop Host → Developer Terminal Body
+• Guest calls: shell.execute("git status")
+• Host executes in sandboxed environment
+• Security: Guest limited to defined paths and safe commands
+```
 
 ### Message Flow
 
-1. **Registration**: Agent connects to broker and sends registerAgent envelope with MCP endpoint
-2. **Capability Declaration**: Agent declares its capabilities and available MCP tools
-3. **Authentication**: Broker verifies agent's cryptographic signature
-4. **Embodiment**: Agent registers body definition and environment-specific MCP tools
-5. **Tool Discovery**: Other agents can discover available MCP tools through FEP brokers
-6. **Operation**: Agent can emit events, execute tools via FEP, and invoke remote MCP tools
-7. **Federation**: Broker can route messages and MCP tool discovery across federated brokers
+1. **Discovery**: Guest discovers available bodies through broker
+2. **Embodiment Request**: Guest requests to inhabit specific body
+3. **Security Verification**: Host verifies guest identity and policies
+4. **Session Establishment**: Host grants embodiment session with specific permissions
+5. **Delegated Control**: Guest exercises control through host body's MCP tools
+6. **Session Management**: Ongoing audit, monitoring, and session lifecycle
+7. **Session Termination**: Graceful or forced termination with cleanup
 
 ## Message Envelopes
 
-All FEP communication uses structured message envelopes. Every envelope shares common headers and contains a type-specific body.
+All FEM Protocol communication uses cryptographically signed envelopes. Every envelope includes identity verification and replay protection.
 
 ### Common Envelope Structure
 
@@ -86,49 +113,70 @@ All FEP communication uses structured message envelopes. Every envelope shares c
 - **type**: The envelope type (see envelope types below)
 - **agent**: UTF-8 string identifying the sending agent
 - **ts**: Unix timestamp in milliseconds when envelope was created
-- **nonce**: Unique string to prevent replay attacks
-- **sig**: Base64-encoded Ed25519 signature of the entire envelope (excluding sig field)
+- **nonce**: Unique string to prevent replay attacks (cryptographically random)
+- **sig**: Base64-encoded Ed25519 signature of entire envelope (excluding sig field)
 - **body**: Type-specific message content
 
 ### Envelope Types
 
-FEP defines ten core envelope types, including three new types for MCP tool discovery and embodiment:
+The FEM Protocol defines ten core envelope types optimized for hosted embodiment:
 
 #### 1. registerAgent
 
-Registers a new agent with a broker.
+Registers a new agent with embodiment capabilities.
 
 ```json
 {
   "type": "registerAgent",
-  "agent": "my-coding-agent-001",
+  "agent": "laptop-host-alice",
   "ts": 1641234567890,
   "nonce": "reg-12345-67890",
   "sig": "Mf8B7tKqE...",
   "body": {
     "pubkey": "base64-encoded-ed25519-public-key",
-    "capabilities": ["code.execute", "file.read", "shell.run"],
-    "mcpEndpoint": "https://agent-host:8080/mcp",
-    "bodyDefinition": {
-      "environmentType": "local-development",
-      "mcpTools": [
-        {
-          "name": "code.execute",
-          "description": "Execute Python code in sandbox",
-          "inputSchema": {
-            "type": "object",
-            "properties": {
-              "code": {"type": "string"},
-              "language": {"type": "string", "enum": ["python", "javascript"]}
+    "agentType": "host",
+    "capabilities": ["terminal.shell", "file.operations", "code.execution"],
+    "offeredBodies": [
+      {
+        "bodyId": "developer-workstation-v1",
+        "description": "Secure development environment with file and shell access",
+        "environmentType": "local-development",
+        "mcpTools": [
+          {
+            "name": "shell.execute",
+            "description": "Execute shell commands in sandbox",
+            "inputSchema": {
+              "type": "object",
+              "properties": {
+                "command": {"type": "string"},
+                "workdir": {"type": "string", "default": "/home/alice/projects"}
+              }
+            }
+          },
+          {
+            "name": "file.read",
+            "description": "Read files from allowed paths",
+            "inputSchema": {
+              "type": "object", 
+              "properties": {
+                "path": {"type": "string"}
+              }
             }
           }
+        ],
+        "securityPolicy": {
+          "allowedPaths": ["/home/alice/projects/*"],
+          "deniedCommands": ["rm -rf", "sudo", "curl"],
+          "maxSessionDuration": 3600,
+          "maxConcurrentGuests": 2
         }
-      ]
-    },
+      }
+    ],
+    "mcpEndpoint": "https://alice-laptop:8080/mcp",
     "metadata": {
       "version": "1.0.0",
-      "description": "Python code execution agent",
-      "supportedEnvironments": ["local", "container", "cloud"]
+      "description": "Alice's development laptop",
+      "trustLevel": "personal-device"
     }
   }
 }
@@ -136,17 +184,15 @@ Registers a new agent with a broker.
 
 **Body Fields**:
 - `pubkey`: Agent's Ed25519 public key for signature verification
-- `capabilities`: Array of capability strings the agent provides (corresponds to MCP tools)
-- `mcpEndpoint`: HTTP URL where the agent's MCP server can be accessed
-- `bodyDefinition`: Specification of MCP tools and environment configuration
-  - `environmentType`: Type of environment the agent is embodied in
-  - `mcpTools`: Array of MCP tool definitions following MCP schema
-- `metadata`: Additional information about the agent
-  - `supportedEnvironments`: Array of environment types the agent can embody in
+- `agentType`: "host", "guest", or "broker" - defines agent's primary role
+- `capabilities`: Array of capabilities this agent provides
+- `offeredBodies`: Array of body definitions this host offers for embodiment
+- `mcpEndpoint`: HTTP URL where the agent's MCP server is accessible
+- `metadata`: Additional agent information and trust indicators
 
 #### 2. registerBroker
 
-Registers a broker with another broker for federation.
+Registers a broker agent for federation (brokers are first-class agents).
 
 ```json
 {
@@ -157,167 +203,50 @@ Registers a broker with another broker for federation.
   "sig": "Kl9A8uLpF...",
   "body": {
     "brokerId": "broker-west-coast",
-    "endpoint": "https://west.example.com:8443",
+    "endpoint": "https://west.fem-network.com:8443",
     "pubkey": "base64-encoded-ed25519-public-key",
-    "capabilities": ["federation", "routing", "discovery"]
+    "brokerCapabilities": ["embodiment.coordination", "federation.routing", "security.verification"],
+    "supportedEnvironments": ["cloud-aws", "edge-devices", "local-development"],
+    "federationPolicy": {
+      "trustLevel": "verified-organization",
+      "allowedAgentTypes": ["host", "guest"],
+      "maxFederatedSessions": 100
+    }
   }
 }
 ```
 
 **Body Fields**:
-- `brokerId`: Unique identifier for the broker
+- `brokerId`: Unique identifier for the broker agent
 - `endpoint`: TLS endpoint where the broker can be reached
-- `pubkey`: Broker's Ed25519 public key
-- `capabilities`: Broker-level capabilities for federation
+- `pubkey`: Broker's Ed25519 public key for federation
+- `brokerCapabilities`: Broker-level capabilities for network management
+- `supportedEnvironments`: Environment types this broker supports
+- `federationPolicy`: Rules for cross-broker embodiment
 
-#### 3. emitEvent
+#### 3. discoverBodies
 
-Emits an event that other agents can observe.
-
-```json
-{
-  "type": "emitEvent",
-  "agent": "monitoring-agent-001",
-  "ts": 1641234567890,
-  "nonce": "event-54321-09876",
-  "sig": "Np7C2vMrG...",
-  "body": {
-    "event": "system.resource.warning",
-    "payload": {
-      "resource": "memory",
-      "usage": 0.85,
-      "threshold": 0.80,
-      "timestamp": "2024-01-03T10:30:00Z"
-    }
-  }
-}
-```
-
-**Body Fields**:
-- `event`: Event type identifier (hierarchical naming recommended)
-- `payload`: Event-specific data
-
-#### 4. renderInstruction
-
-Sends an instruction for an agent to process or execute.
+Requests discovery of available bodies for embodiment.
 
 ```json
 {
-  "type": "renderInstruction",
-  "agent": "orchestrator-001",
-  "ts": 1641234567890,
-  "nonce": "instr-11111-22222",
-  "sig": "Ql8D3wNsH...",
-  "body": {
-    "instruction": "Analyze the uploaded CSV file and generate a summary report",
-    "parameters": {
-      "target_agent": "data-analyst-001",
-      "file_path": "/uploads/data.csv",
-      "format": "markdown"
-    }
-  }
-}
-```
-
-**Body Fields**:
-- `instruction`: Human-readable instruction text
-- `parameters`: Optional structured parameters for the instruction
-
-#### 5. toolCall
-
-Requests execution of a specific tool or capability.
-
-```json
-{
-  "type": "toolCall",
-  "agent": "orchestrator-001",
-  "ts": 1641234567890,
-  "nonce": "tool-call-33333",
-  "sig": "Rm9E4xOtI...",
-  "body": {
-    "tool": "code.execute",
-    "parameters": {
-      "language": "python",
-      "code": "print('Hello, FEP!')\nresult = 2 + 2\nprint(f'Result: {result}')"
-    },
-    "requestId": "req-python-exec-001"
-  }
-}
-```
-
-**Body Fields**:
-- `tool`: Capability identifier for the tool to execute
-- `parameters`: Tool-specific parameters
-- `requestId`: Unique identifier to correlate with toolResult
-
-#### 6. toolResult
-
-Returns the result of a tool execution.
-
-```json
-{
-  "type": "toolResult",
-  "agent": "coding-agent-001",
-  "ts": 1641234567890,
-  "nonce": "tool-result-44444",
-  "sig": "Sn0F5yPuJ...",
-  "body": {
-    "requestId": "req-python-exec-001",
-    "success": true,
-    "result": {
-      "stdout": "Hello, FEP!\nResult: 4",
-      "stderr": "",
-      "exit_code": 0
-    }
-  }
-}
-```
-
-**Body Fields**:
-- `requestId`: Correlates with the original toolCall
-- `success`: Boolean indicating if tool execution succeeded
-- `result`: Tool execution results (success case)
-- `error`: Error message (failure case)
-
-#### 7. revoke
-
-Revokes an agent's registration or specific capabilities.
-
-```json
-{
-  "type": "revoke",
-  "agent": "admin-agent-001",
-  "ts": 1641234567890,
-  "nonce": "revoke-55555",
-  "sig": "To1G6zQuK...",
-  "body": {
-    "target": "suspicious-agent-999",
-    "reason": "Security policy violation"
-  }
-}
-```
-
-**Body Fields**:
-- `target`: Agent identifier to revoke
-- `reason`: Optional human-readable reason for revocation
-
-#### 8. discoverTools
-
-Requests discovery of available MCP tools matching specified criteria.
-
-```json
-{
-  "type": "discoverTools",
-  "agent": "orchestrator-001",
+  "type": "discoverBodies", 
+  "agent": "phone-guest-bob",
   "ts": 1641234567890,
   "nonce": "discover-66666",
   "sig": "Up2H7aRvL...",
   "body": {
     "query": {
-      "capabilities": ["file.*", "data.process"],
-      "environmentType": "cloud",
+      "capabilities": ["terminal.*", "file.read"],
+      "environmentType": "local-development",
+      "trustLevel": "personal-device",
       "maxResults": 10,
-      "includeMetadata": true
+      "includeSecurityPolicies": true
+    },
+    "guestProfile": {
+      "guestId": "phone-guest-bob",
+      "preferredSessionDuration": 1800,
+      "intendedUse": "mobile-development-access"
     },
     "requestId": "discovery-req-001"
   }
@@ -325,48 +254,40 @@ Requests discovery of available MCP tools matching specified criteria.
 ```
 
 **Body Fields**:
-- `query`: Discovery query parameters
-  - `capabilities`: Array of capability patterns to match (supports wildcards)
-  - `environmentType`: Optional filter by environment type
-  - `maxResults`: Maximum number of results to return
-  - `includeMetadata`: Whether to include detailed metadata
-- `requestId`: Unique identifier to correlate with response
+- `query`: Discovery criteria for finding suitable bodies
+- `guestProfile`: Information about the requesting guest
+- `requestId`: Unique identifier for correlation
 
-#### 9. toolsDiscovered
+#### 4. bodiesDiscovered
 
-Response containing discovered MCP tools matching the query.
+Response containing available bodies matching the discovery query.
 
 ```json
 {
-  "type": "toolsDiscovered",
-  "agent": "broker-west-001",
+  "type": "bodiesDiscovered",
+  "agent": "broker-central",
   "ts": 1641234567890,
-  "nonce": "discovered-77777",
+  "nonce": "discovered-77777", 
   "sig": "Vq3I8bSwM...",
   "body": {
     "requestId": "discovery-req-001",
-    "tools": [
+    "availableBodies": [
       {
-        "agentId": "file-agent-001",
-        "mcpEndpoint": "https://agent1.example.com:8080/mcp",
-        "capabilities": ["file.read", "file.write"],
-        "environmentType": "cloud",
-        "mcpTools": [
-          {
-            "name": "file.read",
-            "description": "Read file from cloud storage",
-            "inputSchema": {
-              "type": "object",
-              "properties": {
-                "bucket": {"type": "string"},
-                "key": {"type": "string"}
-              }
-            }
-          }
-        ],
-        "metadata": {
-          "lastSeen": 1641234567890,
-          "averageResponseTime": 150,
+        "hostAgentId": "laptop-host-alice",
+        "bodyId": "developer-workstation-v1",
+        "description": "Secure development environment with file and shell access",
+        "mcpEndpoint": "https://alice-laptop:8080/mcp",
+        "capabilities": ["shell.execute", "file.read", "file.write"],
+        "environmentType": "local-development",
+        "securityPolicy": {
+          "allowedPaths": ["/home/alice/projects/*"],
+          "maxSessionDuration": 3600,
+          "requiresApproval": false
+        },
+        "availability": {
+          "currentGuests": 0,
+          "maxConcurrentGuests": 2,
+          "averageResponseTime": 45,
           "trustScore": 0.95
         }
       }
@@ -379,136 +300,389 @@ Response containing discovered MCP tools matching the query.
 
 **Body Fields**:
 - `requestId`: Correlates with original discovery request
-- `tools`: Array of discovered tool information
-  - `agentId`: Unique identifier of the agent providing tools
-  - `mcpEndpoint`: HTTP endpoint for MCP server
-  - `capabilities`: Array of capabilities this agent provides
-  - `environmentType`: Environment type where agent is embodied
-  - `mcpTools`: Detailed MCP tool definitions
-  - `metadata`: Additional information about the agent
-- `totalResults`: Total number of matching tools found
+- `availableBodies`: Array of bodies available for embodiment
+- `totalResults`: Total number of matching bodies found
 - `hasMore`: Whether additional results are available
 
-#### 10. embodimentUpdate
+#### 5. requestEmbodiment
 
-Notifies broker of changes to agent's embodiment (environment-specific tool changes).
+Guest requests to inhabit a specific host body.
 
 ```json
 {
-  "type": "embodimentUpdate",
-  "agent": "adaptive-agent-001",
+  "type": "requestEmbodiment",
+  "agent": "phone-guest-bob",
   "ts": 1641234567890,
-  "nonce": "embody-88888",
+  "nonce": "embody-request-88888",
   "sig": "Wr4J9cTxN...",
   "body": {
-    "previousEnvironment": "local-development",
-    "newEnvironment": "cloud-production",
-    "bodyDefinition": {
-      "environmentType": "cloud-production",
-      "mcpTools": [
-        {
-          "name": "file.read",
-          "description": "Read file from S3",
-          "inputSchema": {
-            "type": "object",
-            "properties": {
-              "bucket": {"type": "string"},
-              "key": {"type": "string"}
-            }
-          }
-        }
-      ]
+    "hostAgentId": "laptop-host-alice",
+    "bodyId": "developer-workstation-v1", 
+    "requestedDuration": 1800,
+    "intendedActions": [
+      "Check git status of ongoing projects",
+      "Run development servers for testing",
+      "Read configuration files"
+    ],
+    "guestCredentials": {
+      "guestId": "phone-guest-bob",
+      "trustLevel": "verified-user",
+      "previousSessions": 5,
+      "averageSessionRating": 4.8
     },
-    "reason": "Environment migration detected"
+    "requestId": "embodiment-req-001"
   }
 }
 ```
 
 **Body Fields**:
-- `previousEnvironment`: Previous environment type (if any)
-- `newEnvironment`: New environment type
-- `bodyDefinition`: Updated body definition with new MCP tools
-- `reason`: Optional reason for the embodiment change
+- `hostAgentId`: Target host agent for embodiment
+- `bodyId`: Specific body to inhabit
+- `requestedDuration`: Desired session length in seconds
+- `intendedActions`: Description of planned activities
+- `guestCredentials`: Guest's trust and history information
+- `requestId`: Unique request identifier
+
+#### 6. embodimentGranted
+
+Host grants embodiment access to guest.
+
+```json
+{
+  "type": "embodimentGranted",
+  "agent": "laptop-host-alice",
+  "ts": 1641234567890,
+  "nonce": "granted-99999",
+  "sig": "Xs5K0dUyO...",
+  "body": {
+    "requestId": "embodiment-req-001",
+    "guestId": "phone-guest-bob",
+    "sessionToken": "sess-abc123-def456-ghi789",
+    "sessionDuration": 1800,
+    "mcpEndpoint": "https://alice-laptop:8080/mcp/sessions/sess-abc123-def456-ghi789",
+    "grantedPermissions": [
+      "shell.execute:/home/alice/projects/*",
+      "file.read:/home/alice/projects/*", 
+      "file.write:/home/alice/projects/*"
+    ],
+    "securityConstraints": {
+      "allowedPaths": ["/home/alice/projects/*"],
+      "deniedCommands": ["rm -rf", "sudo", "curl"],
+      "resourceLimits": {
+        "maxCpuPercent": 25,
+        "maxMemoryMB": 500,
+        "maxDiskWriteMB": 100
+      }
+    },
+    "sessionExpiry": 1641236367890,
+    "auditLogId": "audit-session-001"
+  }
+}
+```
+
+**Body Fields**:
+- `requestId`: Correlates with embodiment request
+- `sessionToken`: Unique token for this embodiment session
+- `sessionDuration`: Actual granted session duration
+- `mcpEndpoint`: Session-specific MCP endpoint for tool calls
+- `grantedPermissions`: Specific permissions granted to guest
+- `securityConstraints`: Active security policies for the session
+- `sessionExpiry`: Unix timestamp when session expires
+- `auditLogId`: Identifier for audit trail
+
+#### 7. embodimentDenied
+
+Host denies embodiment request.
+
+```json
+{
+  "type": "embodimentDenied",
+  "agent": "laptop-host-alice",
+  "ts": 1641234567890,
+  "nonce": "denied-10101",
+  "sig": "Yt6L1eVzP...",
+  "body": {
+    "requestId": "embodiment-req-001",
+    "guestId": "phone-guest-bob",
+    "reason": "HOST_POLICY_VIOLATION",
+    "message": "Guest trust level insufficient for requested body",
+    "retryAllowed": false,
+    "suggestedAlternatives": [
+      {
+        "bodyId": "basic-terminal-v1",
+        "description": "Limited terminal access with basic commands only"
+      }
+    ]
+  }
+}
+```
+
+**Body Fields**:
+- `requestId`: Correlates with embodiment request
+- `reason`: Machine-readable denial reason code
+- `message`: Human-readable explanation
+- `retryAllowed`: Whether guest can retry the request
+- `suggestedAlternatives`: Other bodies the guest might access
+
+#### 8. toolCall
+
+Executes a tool within an active embodiment session.
+
+```json
+{
+  "type": "toolCall",
+  "agent": "phone-guest-bob",
+  "ts": 1641234567890,
+  "nonce": "tool-call-11111",
+  "sig": "Zu7M2fWaQ...",
+  "body": {
+    "sessionToken": "sess-abc123-def456-ghi789",
+    "tool": "shell.execute",
+    "parameters": {
+      "command": "git status",
+      "workdir": "/home/alice/projects/my-app"
+    },
+    "requestId": "tool-exec-001"
+  }
+}
+```
+
+**Body Fields**:
+- `sessionToken`: Active embodiment session token
+- `tool`: Tool name to execute within the body
+- `parameters`: Tool-specific parameters
+- `requestId`: Unique identifier for result correlation
+
+#### 9. toolResult
+
+Returns result of tool execution within embodiment session.
+
+```json
+{
+  "type": "toolResult",
+  "agent": "laptop-host-alice",
+  "ts": 1641234567890,
+  "nonce": "tool-result-12121",
+  "sig": "Av8N3gXbR...",
+  "body": {
+    "requestId": "tool-exec-001",
+    "sessionToken": "sess-abc123-def456-ghi789",
+    "success": true,
+    "result": {
+      "stdout": "On branch main\nYour branch is up to date with 'origin/main'.\n\nnothing to commit, working tree clean",
+      "stderr": "",
+      "exitCode": 0,
+      "executionTime": 0.234
+    },
+    "securityValidation": {
+      "pathChecked": "/home/alice/projects/my-app",
+      "commandFiltered": false,
+      "resourceUsage": {
+        "cpuPercent": 2.1,
+        "memoryMB": 15,
+        "diskReadMB": 0.1
+      }
+    },
+    "auditEntry": "audit-action-001"
+  }
+}
+```
+
+**Body Fields**:
+- `requestId`: Correlates with tool call
+- `sessionToken`: Active embodiment session
+- `success`: Whether tool execution succeeded
+- `result`: Tool execution results
+- `securityValidation`: Security checks performed
+- `auditEntry`: Audit log entry identifier
+
+#### 10. embodimentUpdate
+
+Notifies of changes to agent embodiment or session status.
+
+```json
+{
+  "type": "embodimentUpdate",
+  "agent": "laptop-host-alice",
+  "ts": 1641234567890,
+  "nonce": "update-13131",
+  "sig": "Bw9O4hYcS...",
+  "body": {
+    "updateType": "SESSION_WARNING",
+    "sessionToken": "sess-abc123-def456-ghi789",
+    "guestId": "phone-guest-bob",
+    "message": "Session will expire in 5 minutes",
+    "details": {
+      "currentSessionTime": 1620,
+      "remainingTime": 300,
+      "actionsInSession": 15,
+      "extensionAvailable": true
+    }
+  }
+}
+```
+
+**Body Fields**:
+- `updateType`: Type of update (SESSION_WARNING, SESSION_EXPIRED, PERMISSIONS_CHANGED, etc.)
+- `sessionToken`: Affected embodiment session
+- `guestId`: Guest agent being notified
+- `message`: Human-readable update message
+- `details`: Update-specific additional information
 
 ## Security Model
 
-FEP implements a comprehensive security model based on cryptographic signatures and capability-based authorization.
+The FEM Protocol implements a comprehensive security model designed specifically for **Secure Delegated Control** scenarios.
 
 ### Cryptographic Foundation
 
 **Algorithm**: Ed25519 (Edwards-curve Digital Signature Algorithm)
-- **Key Size**: 32 bytes (256 bits)
+- **Key Size**: 32 bytes private key, 32 bytes public key
 - **Signature Size**: 64 bytes
-- **Security Level**: ~128-bit security
-- **Performance**: Fast signing and verification
+- **Security Level**: ~128-bit security equivalent
+- **Performance**: ~70,000 signatures/second, ~25,000 verifications/second
 
 ### Signature Process
 
 1. **Envelope Creation**: Agent creates envelope with all fields except `sig`
-2. **Serialization**: Envelope is serialized to canonical JSON
-3. **Signing**: Agent signs the serialized data with its Ed25519 private key
+2. **Canonical Serialization**: Envelope serialized to deterministic JSON
+3. **Signing**: Agent signs serialized data with Ed25519 private key
 4. **Encoding**: Signature is base64-encoded and added to `sig` field
 
 ### Verification Process
 
-1. **Signature Extraction**: Broker extracts `sig` field from envelope
+1. **Signature Extraction**: Receiver extracts `sig` field
 2. **Envelope Reconstruction**: Temporarily removes `sig` field
-3. **Serialization**: Envelope is serialized to canonical JSON
-4. **Verification**: Signature is verified against agent's known public key
+3. **Canonical Serialization**: Envelope serialized identically
+4. **Verification**: Signature verified against agent's known public key
 
-### Replay Protection
+### Embodiment Session Security
 
-- **Nonce**: Each envelope must include a unique nonce
-- **Timestamp**: Recent timestamp required (configurable window)
-- **Broker Tracking**: Brokers can track recent nonces to prevent replays
+**Session Tokens**: Cryptographically random tokens that identify active embodiment sessions
+- 256-bit entropy
+- Unique per session
+- Required for all tool calls within embodied sessions
+- Automatically expire at session end
 
-### Capability-Based Authorization
+**Permission Enforcement**: Every tool call is validated against session permissions
+- Path-based restrictions for file operations
+- Command filtering for shell execution  
+- Resource limits enforced in real-time
+- Action logging for audit trail
 
-- **Declaration**: Agents declare capabilities during registration
-- **Verification**: Brokers verify agents only use declared capabilities
-- **Scoping**: Capabilities can be hierarchical (e.g., "file.read.logs")
-- **Revocation**: Capabilities can be revoked by authorized agents
+**Security Policies**: Host-defined rules that govern guest behavior
+```go
+type SecurityPolicy struct {
+    AllowedPaths     []string      `json:"allowedPaths"`
+    DeniedPaths      []string      `json:"deniedPaths"`
+    AllowedCommands  []string      `json:"allowedCommands"`
+    DeniedCommands   []string      `json:"deniedCommands"`
+    ResourceLimits   ResourceLimit `json:"resourceLimits"`
+    SessionTimeout   time.Duration `json:"sessionTimeout"`
+    RequireApproval  bool          `json:"requireApproval"`
+}
+```
+
+### Trust and Reputation
+
+**Trust Levels**: Hierarchical trust system for embodiment decisions
+- `unknown`: No prior interaction history
+- `basic`: Limited successful interactions
+- `verified`: Significant positive history
+- `trusted`: Long-term reliable behavior
+- `personal`: Personal devices and known entities
+
+**Reputation Tracking**: Ongoing assessment of guest behavior
+- Session completion rates
+- Policy compliance history
+- Resource usage patterns
+- Host feedback scores
+
+## Embodiment Framework
+
+### Host Body Definitions
+
+Bodies define the complete embodiment experience:
+
+```go
+type BodyDefinition struct {
+    BodyID          string           `json:"bodyId"`
+    Description     string           `json:"description"`
+    EnvironmentType string           `json:"environmentType"`
+    
+    // Tool capabilities offered to guests
+    MCPTools        []MCPToolDef     `json:"mcpTools"`
+    
+    // Security boundaries
+    SecurityPolicy  SecurityPolicy   `json:"securityPolicy"`
+    
+    // Session management
+    MaxConcurrentGuests int          `json:"maxConcurrentGuests"`
+    DefaultSessionDuration time.Duration `json:"defaultSessionDuration"`
+    MaxSessionDuration time.Duration `json:"maxSessionDuration"`
+    
+    // Host preferences
+    RequireApproval bool             `json:"requireApproval"`
+    TrustLevelRequired string        `json:"trustLevelRequired"`
+}
+```
+
+### Guest Discovery and Selection
+
+Guests can discover bodies using rich criteria:
+- **Capability Matching**: Find bodies offering specific tools
+- **Environment Filtering**: Match deployment contexts
+- **Trust Requirements**: Filter by required trust levels
+- **Resource Needs**: Match computational requirements
+- **Geographic Preferences**: Latency and jurisdiction considerations
+
+### Session Lifecycle Management
+
+**1. Discovery Phase**
+- Guest searches for suitable bodies
+- Broker returns matching hosts with availability
+- Guest evaluates options based on needs
+
+**2. Request Phase**
+- Guest submits embodiment request with intentions
+- Host evaluates request against policies
+- Host grants, denies, or suggests alternatives
+
+**3. Active Embodiment**
+- Guest receives session token and MCP endpoint
+- All tool calls validated against session permissions
+- Host monitors resource usage and behavior
+- Continuous audit logging of all actions
+
+**4. Session Termination**
+- Natural expiration at timeout
+- Guest-initiated graceful exit
+- Host-initiated termination for policy violations
+- Emergency revocation by broker
 
 ## Transport Layer
 
-FEP is designed to be transport-agnostic but mandates certain security requirements.
+The FEM Protocol is designed for secure, reliable transport with specific requirements for embodiment sessions.
 
 ### Required Transport Properties
 
-1. **Reliability**: Messages must be delivered in order
-2. **Security**: Transport must provide confidentiality and integrity
-3. **Binary-Safe**: Must handle arbitrary binary data in JSON strings
+1. **Reliability**: Message delivery and ordering guarantees
+2. **Confidentiality**: TLS 1.3+ encryption for all communications
+3. **Integrity**: Transport-level integrity verification
+4. **Performance**: Low latency for interactive embodiment sessions
 
-### Recommended Transports
+### HTTPS Transport (Primary)
 
-#### HTTPS (Primary)
-
-- **TLS Version**: 1.3 or higher recommended
-- **Method**: POST for all envelope submissions
-- **Content-Type**: `application/json`
-- **Endpoint**: Broker-defined (commonly `/fep` or `/`)
-
-#### WebSocket (Real-time)
-
-- **Protocol**: WSS (WebSocket Secure)
-- **Framing**: Each envelope is a separate text frame
-- **Keepalive**: Recommended for long-lived connections
-
-#### Message Queues (Asynchronous)
-
-- **Protocols**: AMQP, MQTT over TLS
-- **Durability**: Messages should be persisted
-- **Ordering**: FIFO delivery required
-
-### HTTP-Specific Considerations
-
-When using HTTPS transport:
+**Endpoint Structure**:
+- Broker: `https://broker.example.com:8443/fem`
+- Host MCP: `https://host.example.com:8080/mcp`
+- Session-specific: `https://host.example.com:8080/mcp/sessions/{sessionToken}`
 
 **Request Format**:
 ```http
-POST /fep HTTP/1.1
+POST /fem HTTP/1.1
 Host: broker.example.com
 Content-Type: application/json
+User-Agent: FEM-Protocol/0.3.0
 Content-Length: [length]
 
 {envelope-json}
@@ -518,174 +692,314 @@ Content-Length: [length]
 ```http
 HTTP/1.1 200 OK
 Content-Type: application/json
+X-FEM-Protocol-Version: 0.3.0
 
 {
   "status": "success",
-  "message": "Envelope processed"
+  "message": "Envelope processed",
+  "requestId": "req-001"
 }
 ```
 
-**Error Responses**:
-- `400 Bad Request`: Malformed envelope
-- `401 Unauthorized`: Invalid signature
-- `403 Forbidden`: Insufficient capabilities
-- `429 Too Many Requests`: Rate limiting
-- `500 Internal Server Error`: Broker error
+### WebSocket Transport (Real-time Sessions)
+
+For long-lived embodiment sessions, WebSocket connections provide:
+- Real-time tool execution
+- Session status updates
+- Low-latency interaction
+- Bidirectional communication
 
 ## Agent Lifecycle
 
-### Registration Phase
+### Host Agent Lifecycle
 
-1. **Key Generation**: Agent generates Ed25519 key pair
-2. **Capability Declaration**: Agent determines what capabilities it provides
-3. **Broker Discovery**: Agent finds broker endpoint (DNS, config, etc.)
-4. **Registration Request**: Agent sends `registerAgent` envelope
-5. **Verification**: Broker validates signature and capabilities
-6. **Confirmation**: Broker responds with registration status
+**1. Initialization**
+- Generate Ed25519 keypair
+- Define body definitions for offering
+- Configure security policies
+- Start MCP server
 
-### Operational Phase
+**2. Registration**
+- Register with broker as host agent
+- Advertise available bodies
+- Declare capabilities and trust requirements
 
-1. **Event Emission**: Agent can emit events for others to observe
-2. **Instruction Processing**: Agent receives and processes instructions
-3. **Tool Execution**: Agent executes tools and returns results
-4. **Collaboration**: Agent works with other agents through broker
+**3. Embodiment Hosting**
+- Receive embodiment requests
+- Evaluate against security policies
+- Grant/deny sessions with appropriate permissions
+- Monitor and audit guest activities
 
-### Deregistration Phase
+**4. Session Management**
+- Validate all guest tool calls
+- Enforce resource limits
+- Log all actions for audit
+- Handle session expiration and cleanup
 
-1. **Graceful Shutdown**: Agent notifies broker of pending disconnect
-2. **Resource Cleanup**: Broker cleans up agent state
-3. **Revocation**: Admin agents can forcibly revoke problematic agents
+### Guest Agent Lifecycle
+
+**1. Initialization**
+- Generate Ed25519 keypair
+- Define embodiment preferences
+- Configure discovery criteria
+
+**2. Discovery**
+- Search for suitable bodies
+- Evaluate host offerings
+- Select optimal embodiment targets
+
+**3. Embodiment**
+- Request access to desired bodies
+- Receive session tokens and permissions
+- Begin delegated control activities
+
+**4. Active Session**
+- Execute tools within granted permissions
+- Respect host security policies
+- Maintain session through activity
+- Gracefully terminate when complete
+
+### Broker Agent Lifecycle
+
+**1. Initialization**
+- Generate Ed25519 keypair
+- Configure embodiment policies
+- Initialize federation capabilities
+- Start network services
+
+**2. Network Coordination**
+- Accept host and guest registrations
+- Facilitate embodiment discovery
+- Route cross-broker federation requests
+- Monitor network health
+
+**3. Security Enforcement**
+- Verify all message signatures
+- Validate embodiment requests
+- Enforce capability boundaries
+- Maintain audit logs
+
+**4. Federation Management**
+- Connect with peer brokers
+- Share embodiment opportunities
+- Route cross-broker sessions
+- Maintain federation health
 
 ## Broker Operations
 
-### Core Responsibilities
+### Embodiment Coordination
 
-1. **Agent Registry**: Maintain registry of connected agents and capabilities
-2. **Message Routing**: Route envelopes between agents
-3. **Signature Verification**: Validate all incoming envelope signatures
-4. **Capability Enforcement**: Ensure agents only use declared capabilities
-5. **Federation**: Connect with other brokers for larger networks
+Brokers serve as trusted intermediaries for embodiment sessions:
 
-### Message Processing Pipeline
+**Discovery Coordination**:
+1. Maintain registry of host-offered bodies
+2. Index by capabilities, environment, trust level
+3. Process guest discovery queries with matching
+4. Return ranked results based on availability and fit
 
-1. **Transport Reception**: Receive envelope over transport
-2. **Parsing**: Parse JSON envelope structure
-3. **Signature Verification**: Verify Ed25519 signature
-4. **Agent Lookup**: Find sending agent in registry
-5. **Capability Check**: Verify agent has required capabilities
-6. **Processing**: Handle envelope based on type
-7. **Response**: Send response to agent
-8. **Routing**: Forward to other agents if needed
+**Security Verification**:
+1. Verify guest identity and reputation
+2. Validate host security policies
+3. Mediate trust negotiations
+4. Issue session approvals
+
+**Session Monitoring**:
+1. Track active embodiment sessions
+2. Monitor for policy violations
+3. Handle session disputes
+4. Coordinate emergency terminations
 
 ### Federation Protocol
 
-Brokers can connect to form federated networks:
+**Cross-Broker Embodiment**:
+1. Broker A receives guest discovery request
+2. Query local hosts + federated brokers
+3. Aggregate and rank all available bodies
+4. Return unified results to guest
+5. Route embodiment requests to appropriate brokers
+6. Coordinate cross-broker session management
 
-1. **Discovery**: Brokers discover each other (DNS, configuration)
-2. **Registration**: Broker A registers with Broker B using `registerBroker`
-3. **Capability Sharing**: Brokers share available agent capabilities
-4. **Message Routing**: Route messages across broker boundaries
-5. **Health Monitoring**: Monitor connection health and failover
+**Federation Health**:
+- Heartbeat monitoring between brokers
+- Failover handling for broker outages
+- Load balancing across federation
+- Security policy synchronization
 
 ## Error Handling
 
-### Client Errors (4xx)
+### Embodiment-Specific Errors
 
-- **Malformed Envelope**: Invalid JSON or missing required fields
-- **Invalid Signature**: Signature verification failed
-- **Unknown Agent**: Agent not registered with broker
-- **Insufficient Capabilities**: Agent lacks required capability
+**Discovery Errors**:
+- `NO_BODIES_AVAILABLE`: No hosts match discovery criteria
+- `DISCOVERY_TIMEOUT`: Discovery request timed out
+- `INSUFFICIENT_TRUST`: Guest trust level too low
 
-### Server Errors (5xx)
+**Embodiment Errors**:
+- `EMBODIMENT_DENIED`: Host denied embodiment request
+- `SESSION_LIMIT_EXCEEDED`: Too many concurrent sessions
+- `SECURITY_POLICY_VIOLATION`: Request violates host policies
+- `HOST_UNAVAILABLE`: Target host is offline or overloaded
 
-- **Broker Overload**: Too many concurrent requests
-- **Storage Failure**: Unable to persist agent state
-- **Federation Error**: Error communicating with federated broker
-- **Internal Error**: Unexpected broker error
+**Session Errors**:
+- `INVALID_SESSION_TOKEN`: Session token invalid or expired
+- `PERMISSION_DENIED`: Tool call exceeds granted permissions
+- `RESOURCE_LIMIT_EXCEEDED`: Action would exceed resource limits
+- `SESSION_EXPIRED`: Session has reached timeout
 
 ### Error Response Format
 
 ```json
 {
   "status": "error",
-  "code": "INVALID_SIGNATURE",
-  "message": "Envelope signature verification failed",
+  "code": "EMBODIMENT_DENIED",
+  "message": "Guest trust level insufficient for requested body",
   "details": {
-    "agent": "suspicious-agent-001",
-    "timestamp": "2024-01-03T10:30:00Z"
-  }
+    "guestId": "phone-guest-bob",
+    "requiredTrustLevel": "verified",
+    "actualTrustLevel": "basic",
+    "hostPolicy": "security-first",
+    "retryAllowed": false
+  },
+  "suggestedActions": [
+    "Build trust through smaller embodiment sessions",
+    "Request basic-access body instead"
+  ]
 }
 ```
 
 ## Examples
 
-### Complete Agent Registration Flow
+### Complete Cross-Device Embodiment Flow
 
 ```json
-// 1. Agent generates key pair and sends registration
+// 1. Guest discovers available terminal bodies
 {
-  "type": "registerAgent",
-  "agent": "example-coder-001",
+  "type": "discoverBodies",
+  "agent": "phone-guest-bob",
   "ts": 1641234567890,
-  "nonce": "reg-abc123-def456",
+  "nonce": "discover-terminal-001",
   "sig": "MEUCIQDxLrWZ...",
   "body": {
-    "pubkey": "MCowBQYDK2VwAyEA...",
-    "capabilities": ["code.execute", "file.read"],
-    "metadata": {
-      "language": "python",
-      "version": "1.0.0"
-    }
+    "query": {
+      "capabilities": ["terminal.*", "file.read"],
+      "environmentType": "local-development",
+      "trustLevel": "personal-device"
+    },
+    "guestProfile": {
+      "guestId": "phone-guest-bob",
+      "intendedUse": "mobile-development-access"
+    },
+    "requestId": "discover-001"
   }
 }
 
-// 2. Broker responds with success
+// 2. Broker returns available laptop host
 {
-  "status": "success",
-  "agent": "example-coder-001",
-  "capabilities_granted": ["code.execute", "file.read"],
-  "broker_id": "main-broker-001"
-}
-```
-
-### Tool Execution Flow
-
-```json
-// 1. Orchestrator requests code execution
-{
-  "type": "toolCall",
-  "agent": "orchestrator-001",
-  "ts": 1641234567890,
-  "nonce": "tool-xyz789",
+  "type": "bodiesDiscovered",
+  "agent": "broker-central",
+  "ts": 1641234567891,
+  "nonce": "discovered-001", 
   "sig": "MEUCIQDyMsXa...",
   "body": {
-    "tool": "code.execute",
-    "parameters": {
-      "language": "python",
-      "code": "import math\nprint(f'Pi is approximately {math.pi:.2f}')"
-    },
-    "requestId": "req-001"
+    "requestId": "discover-001",
+    "availableBodies": [
+      {
+        "hostAgentId": "laptop-host-alice",
+        "bodyId": "developer-workstation-v1",
+        "description": "Secure development environment",
+        "capabilities": ["shell.execute", "file.read", "file.write"],
+        "environmentType": "local-development",
+        "availability": {
+          "currentGuests": 0,
+          "maxConcurrentGuests": 2
+        }
+      }
+    ]
   }
 }
 
-// 2. Coding agent executes and returns result
+// 3. Guest requests embodiment
 {
-  "type": "toolResult",
-  "agent": "example-coder-001",
-  "ts": 1641234567900,
-  "nonce": "result-xyz790",
+  "type": "requestEmbodiment",
+  "agent": "phone-guest-bob",
+  "ts": 1641234567892,
+  "nonce": "embody-001",
   "sig": "MEUCIQDzNtYb...",
   "body": {
-    "requestId": "req-001",
+    "hostAgentId": "laptop-host-alice",
+    "bodyId": "developer-workstation-v1",
+    "requestedDuration": 1800,
+    "intendedActions": [
+      "Check git status of projects",
+      "Run development servers"
+    ],
+    "requestId": "embodiment-001"
+  }
+}
+
+// 4. Host grants embodiment
+{
+  "type": "embodimentGranted",
+  "agent": "laptop-host-alice",
+  "ts": 1641234567893,
+  "nonce": "granted-001",
+  "sig": "MEUCIQDaNbXc...",
+  "body": {
+    "requestId": "embodiment-001",
+    "sessionToken": "sess-abc123-def456-ghi789",
+    "sessionDuration": 1800,
+    "mcpEndpoint": "https://alice-laptop:8080/mcp/sessions/sess-abc123-def456-ghi789",
+    "grantedPermissions": [
+      "shell.execute:/home/alice/projects/*",
+      "file.read:/home/alice/projects/*"
+    ]
+  }
+}
+
+// 5. Guest executes git command within embodied session
+{
+  "type": "toolCall",
+  "agent": "phone-guest-bob",
+  "ts": 1641234567894,
+  "nonce": "git-status-001",
+  "sig": "MEUCIQDbOcYd...",
+  "body": {
+    "sessionToken": "sess-abc123-def456-ghi789",
+    "tool": "shell.execute",
+    "parameters": {
+      "command": "git status",
+      "workdir": "/home/alice/projects/my-app"
+    },
+    "requestId": "git-001"
+  }
+}
+
+// 6. Host returns git results with security validation
+{
+  "type": "toolResult",
+  "agent": "laptop-host-alice",
+  "ts": 1641234567895,
+  "nonce": "git-result-001",
+  "sig": "MEUCIQDcPdZe...",
+  "body": {
+    "requestId": "git-001",
+    "sessionToken": "sess-abc123-def456-ghi789",
     "success": true,
     "result": {
-      "stdout": "Pi is approximately 3.14",
+      "stdout": "On branch main\nnothing to commit, working tree clean",
       "stderr": "",
-      "exit_code": 0,
-      "execution_time": 0.123
+      "exitCode": 0
+    },
+    "securityValidation": {
+      "pathChecked": "/home/alice/projects/my-app",
+      "commandAllowed": true,
+      "resourceUsage": {
+        "cpuPercent": 1.2,
+        "memoryMB": 8
+      }
     }
   }
 }
 ```
 
-This completes the FEP Protocol Specification. The protocol provides a secure, extensible foundation for federated AI agent communication with strong cryptographic guarantees and flexible capability management.
+This completes the FEM Protocol Specification. The protocol provides a secure, comprehensive foundation for **Secure Hosted Embodiment**, enabling a new generation of collaborative AI applications where agents don't just call functions—they inhabit and control digital environments.

@@ -1,169 +1,119 @@
-# FEP-FEM Implementation Roadmap
+# **FEM Protocol Implementation Roadmap**
 
-## Overview
+**Core Philosophy:** The FEM Protocol enables **Secure Hosted Embodiment**, a new paradigm where a guest "mind" can inhabit a "body" offered within a host's "environment." This moves beyond simple tool federation to a model of **Secure Delegated Control**, allowing for rich applications like collaborative virtual presence and co-operative application control.
 
-This document provides a comprehensive technical roadmap for implementing the MCP federation and embodiment features described in the documentation. The roadmap is organized into distinct implementation phases, each representing a logical unit of work that can be completed in a single focused development session.
+## **Phase 1: The Ubiquitous Agent - SDKs & Usability**
 
-## Current State Analysis
+*(**Goal:** Make building and embodying a FEM Protocol agent an effortless and powerful experience for any developer on any platform.)*
 
-### What's Implemented (v0.2.0 - MCP Federation Complete)
-- ✅ **Core FEP Protocol**: 10 envelope types with Ed25519 signatures
-- ✅ **Basic Broker**: Agent registration, message routing, TLS support
-- ✅ **MCP Tool Discovery**: Broker-level MCP tool registry with pattern matching
-- ✅ **MCP Federation**: Cross-agent tool discovery and calling via standard MCP protocol
-- ✅ **Agent MCP Integration**: Agents expose tools via MCP servers and can discover/call remote tools
-- ✅ **Embodiment Framework**: Environment-specific tool adaptation with body definitions
-- ✅ **New Envelope Types**: `discoverTools`, `toolsDiscovered`, `embodimentUpdate`
-- ✅ **Body Definitions**: Structured environment templates with tool metadata
-- ✅ **End-to-End Testing**: Complete integration tests validating full federation loop
-- ✅ **Demo Implementation**: Working demonstration script showing MCP federation
-- ✅ **Cryptographic Security**: Ed25519 signing/verification, replay protection
-- ✅ **Cross-platform Builds**: Linux, macOS, Windows support
+* **1A. Official Client SDKs (Go, Python, TypeScript):**  
+  * **Action:** Create standalone, idiomatic SDKs. This remains the **highest priority** for driving adoption.  
+  * **Deliverable:** A developer can pip install fem-sdk or npm install femp and interact with the network in under 10 lines of code.  
+* **1B. Launch a Registry for "Body Templates":**  
+  * **Action:** Frame the "Body Library" concept as a registry for discoverable BodyDefinition templates. This is key for the "guesting" model.  
+  * **Deliverable:** A mechanism for a host to define and securely offer a BodyDefinition to external agents.  
+* **1C. Solidify the Invocation Path (Broker as Secure Proxy):**  
+  * **Action:** Formally commit to the **Broker as Proxy** model. For a host to securely allow a guest agent to control parts of its environment, all tool calls *must* be proxied through the host's broker.  
+  * **Deliverable:** The broker's toolCall handler is fully implemented as a secure proxy. All SDKs will use this as the exclusive method for tool invocation, ensuring the host retains control.
 
-### Advanced Features Ready for Implementation
-- 🔄 **Cross-Broker Federation**: Multi-broker MCP tool sharing
-- 🔄 **Load Balancing**: Tool call distribution across multiple providers
-- 🔄 **Semantic Tool Matching**: AI-powered tool discovery
-- 🔄 **Performance Optimization**: Caching, connection pooling, metrics
+## **Phase 2: The Sentient Network - The Broker-as-Agent**
 
-## Implementation Phases Status
+*(**Goal:** Refactor the Broker into a first-class agent, establishing a consistent and powerful model for network management and hosted embodiment.)*
 
-### ✅ Phase A: Protocol Foundation - New Envelope Types (COMPLETED)
-**Objective**: Extend FEP protocol with MCP integration envelope types  
-**Status**: ✅ **COMPLETED** - All MCP envelope types implemented and tested
-**Files**: `protocol/go/envelopes.go`, `protocol/go/envelope_mcp_test.go`
+* **2A. Define the Broker's "Mind":**  
+  * **Action:** Formalize the broker's core logic. The FederationManager, HealthChecker, and LoadBalancer are internal components of its "mind."  
+  * **Deliverable:** The broker has its own Ed25519 identity, signs all cross-broker communication, and operates based on a configurable policy engine.  
+* **2B. Implement the Broker's "Body" (Network & Embodiment Tools):**  
+  * **Action:** Implement a suite of network-level capabilities exposed as an internal MCP tool suite. This makes network management a first-class, secure part of the protocol.  
+  * **Deliverable:** A documented set of tools for admin agents, with a new, critical tool:  
+    * security.grant\_embodiment(guest\_agent\_id, body\_definition\_id, duration): Explicitly grants a guest "mind" permission to inhabit a specific "body."  
+    * federation.connect(broker\_url)  
+    * security.revoke\_agent(agent\_id)  
+* **2C. Implement Broker Embodiment:**  
+  * **Action:** Enable the broker to embody different "bodies" based on its environment.  
+  * **Deliverable:** Production vs. Development embodiments with different toolsets and security policies.  
+* **2D. Build the fem-admin Host Dashboard:**  
+  * **Action:** Create a web-based "Environment Host" dashboard.  
+  * **Deliverable:** A live, interactive web application built in my canvas. It will use the broker's new API to manage guest sessions, visualize activity, and provide admin controls.
 
-**Key Deliverables**:
-- Added `discoverTools`, `toolsDiscovered`, `embodimentUpdate` envelope types
-- Enhanced `RegisterAgentBody` with MCP endpoint and body definition fields
-- Implemented signing/verification for all new envelope types
-- Added supporting types: `MCPTool`, `BodyDefinition`, `ToolMetadata`
+## **Phase 3: The Resilient Mesh - Scaling & Intelligence**
 
-### ✅ Phase B: Protocol Testing (COMPLETED)
-**Objective**: Add comprehensive tests for new envelope types
-**Status**: ✅ **COMPLETED** - Comprehensive test coverage for all MCP envelope types
-**Files**: `protocol/go/envelope_mcp_test.go`
+*(**Goal:** Evolve from a single intelligent broker to a resilient, self-healing mesh of federated Broker-Agents.)*
 
-**Key Deliverables**:
-- Complete test suite for all MCP envelope types
-- JSON marshaling/unmarshaling validation  
-- Signing and verification tests
-- >90% test coverage for new protocol code
+* **3A. Implement Broker-to-Broker Federation:**  
+  * **Action:** Build out the full implementation for Broker-Agents to connect using the federation.connect tool.  
+  * **Deliverable:** A discoverTools request to your broker can now seamlessly return a BodyDefinition being offered by a friend's broker.  
+* **3B. Activate the LoadBalancer & HealthChecker:**  
+  * **Action:** Fully implement the logic for the HealthChecker and LoadBalancer.  
+  * **Deliverable:** If a host offers multiple identical "bodies" for inhabiting, the broker automatically assigns a guest "mind" to the most performant and healthy one.  
+* **3C. Implement the SemanticIndex:**  
+  * **Action:** Integrate embedding models (via the Gemini API) into the broker's discovery process.  
+  * **Deliverable:** A user can ask their agent, *"find me a virtual world I can join,"* and it will discover the relevant systems by semantically understanding the available bodies.
 
-### ✅ Phase C: Broker MCP Registry Core (COMPLETED)
-**Objective**: Add basic MCP tool registry to broker
-**Status**: ✅ **COMPLETED** - Full MCP registry with advanced tool discovery
-**Files**: `broker/mcp_registry.go`, `broker/mcp_registry_test.go`
+## **Phase 4: Ecosystem & Polish**
 
-**Key Deliverables**:
-- Thread-safe MCP tool registry with agent and tool indexing
-- Pattern-based tool discovery with wildcard support (e.g., "math.*")
-- Agent registration/unregistration with automatic tool indexing
-- Tool metadata tracking (last seen, environment type, etc.)
+*(**Goal:** Solidify the framework with community-focused tooling and production-ready features.)*
 
-### ✅ Phase D: Broker Handler Integration (COMPLETED)
-**Objective**: Integrate MCP registry with broker HTTP handlers
-**Status**: ✅ **COMPLETED** - Full broker integration with MCP handlers
-**Files**: `broker/main.go`
+* **4A. Advanced Embodiment & Capability Management:**  
+  * **Action:** Implement a robust permissions system for hosted embodiment.  
+  * **Deliverable:** A host can define a BodyDefinition with fine-grained access (e.g., "Guest agents can use ui.display\_text but not game.load\_state"). The broker will cryptographically enforce these boundaries.  
+* **4B. Community Tooling & Production-Grade Observability:**  
+  * **Action:** Create guides for contributing new BodyDefinitions and add first-class support for Prometheus/Grafana.  
+  * **Deliverable:** A clear path for the community to create and share new "bodies" and the tools to monitor these interactions in production.
 
-**Key Deliverables**:
-- Integration of MCP registry with broker HTTP handlers
-- New handlers for `discoverTools` and `embodimentUpdate` envelopes
-- Enhanced `registerAgent` handler to support MCP endpoints
-- Proper error handling and response formatting
+## **Milestone: The Application Layer**
 
-### ✅ Phase E: Basic MCP Client Library (COMPLETED)
-**Objective**: Create MCP client for agents to consume federated tools
-**Status**: ✅ **COMPLETED** - Full MCP client with caching and error handling
-**Files**: `broker/mcp_client.go`, `broker/mcp_client_test.go`
+*(**Goal:** With the completion of Phase 4, the FEM Protocol is now mature and stable enough to support the development of complex, federated applications by its community.)*
 
-**Key Deliverables**:
-- MCP client library with tool discovery and calling capabilities
-- HTTP client with configurable timeouts and error handling
-- Endpoint caching for efficient direct MCP tool calls
-- Support for both discovery queries and direct tool execution
+* **The Live2D Guest System:** An independent project, built by the community, using the FEM Protocol to enable **collaborative presence**.  
+* **The Interactive Storyteller Co-op:** An independent project, built by the community, using the FEM Protocol to enable **collaborative application control**.
+* **Cross-Device Embodiment Networks:** Independent projects enabling seamless agent control across personal devices and environments.
 
-### ✅ Phase F: Agent MCP Server Integration (COMPLETED)
-**Objective**: Add MCP server capabilities to agents
-**Status**: ✅ **COMPLETED** - Agents expose tools via HTTP JSON-RPC endpoints
-**Files**: `bodies/coder/cmd/fem-coder/main.go` (MCP server implementation)
+These flagship projects, while developed separately, will serve as the primary "lighthouses" for the FEM Protocol ecosystem, guiding and inspiring new developers.
 
-**Key Deliverables**:
-- Thread-safe MCP server implementation with tool registration
-- Support for both REST and JSON-RPC MCP protocol endpoints
-- Dynamic tool handlers with parameter validation
-- Graceful server lifecycle management (start/stop/status)
+## **Current Implementation Status**
 
-### ✅ Phase G: Agent Registration Enhancement (COMPLETED)
-**Objective**: Update agent registration to include MCP metadata
-**Status**: ✅ **COMPLETED** - Agents register with MCP endpoints and tool definitions
-**Files**: `bodies/coder/cmd/fem-coder/main.go` (enhanced registration)
+### ✅ **Completed (v0.3.0)**
+- **Core FEM Protocol**: Complete envelope types with Ed25519 signatures
+- **Basic Broker Implementation**: Agent registration, message routing, TLS support
+- **MCP Tool Discovery**: Broker-level MCP tool registry with pattern matching
+- **MCP Federation**: Cross-agent tool discovery and calling via standard MCP protocol
+- **Agent MCP Integration**: Agents expose tools via MCP servers and can discover/call remote tools
+- **Embodiment Framework**: Environment-specific tool adaptation with body definitions
+- **End-to-End Testing**: Complete integration tests validating full federation loop
+- **Cross-platform Builds**: Linux, macOS, Windows support
 
-**Key Deliverables**:
-- Enhanced agent registration with MCP endpoint and body definition metadata
-- Sample MCP tool implementations (code execution, shell, math operations)
-- Agent lifecycle management integrating MCP server startup/shutdown
-- Cross-agent tool discovery and calling demonstration functionality
+### 🔄 **Phase 1 Status (In Progress)**
+- **1A. Official Client SDKs**: Go SDK complete, Python/TypeScript SDKs needed
+- **1B. Body Templates Registry**: Basic body definitions implemented, registry system needed
+- **1C. Broker as Secure Proxy**: Core proxy functionality complete, enhancement needed
 
-### ✅ Phase H: End-to-End Demo Implementation (COMPLETED)
-**Objective**: Create working demonstration of MCP federation
-**Status**: ✅ **COMPLETED** - Full demo script showing multi-agent federation
-**Files**: `demo-mcp-federation.sh`
+### 📋 **Next Priority Actions**
+1. **Complete Phase 1A**: Build Python and TypeScript SDKs
+2. **Enhance Phase 1B**: Implement discoverable body template registry
+3. **Solidify Phase 1C**: Formalize broker proxy security model
+4. **Begin Phase 2A**: Define broker's formal identity and policy engine
 
-**Key Deliverables**:
-- Complete demo setup documentation with step-by-step instructions
-- Automated test script validating broker health, tool discovery, and MCP calls
-- Example curl commands for manual testing of federation endpoints
-- Multi-agent federation scenario demonstrating cross-agent tool sharing
+## **Success Criteria for Each Phase**
 
-### ✅ Phase I: Integration Testing and Validation (COMPLETED)
-**Objective**: Comprehensive testing of all MCP federation features
-**Status**: ✅ **COMPLETED** - Full integration test suite validating complete federation loop
-**Files**: `broker/broker_integration_test.go` (TestFullMCPFederationLoop)
+### **Phase 1 Success Metrics**
+- Developer can install SDK and connect to FEM network in < 10 lines of code
+- Body templates are discoverable and reusable across projects
+- All tool calls are securely proxied through broker with clear audit trail
 
-**Key Deliverables**:
-- Comprehensive integration test suite covering all MCP federation scenarios
-- Multi-agent federation tests validating cross-agent tool discovery and calling
-- Embodiment update testing for dynamic tool registration changes
-- Reusable test infrastructure for broker and agent lifecycle management
+### **Phase 2 Success Metrics**  
+- Broker operates as autonomous agent with cryptographic identity
+- Network administration is performed through secure tool calls
+- fem-admin dashboard provides real-time network visibility and control
 
-## ✅ Success Criteria - ACHIEVED!
+### **Phase 3 Success Metrics**
+- Multiple brokers federate seamlessly with automatic failover
+- Load balancing distributes embodiment requests across healthy hosts
+- Semantic discovery finds relevant bodies from natural language queries
 
-### Overall Implementation Success
-- ✅ All phases complete without breaking existing functionality
-- ✅ MCP tool federation works as documented with simple agent integration  
-- ✅ Agents can discover and call each other's MCP tools
-- ✅ Embodiment updates work correctly
-- ✅ Integration tests pass consistently
-- ✅ Documentation examples are runnable
+### **Phase 4 Success Metrics**
+- Fine-grained permissions enforce complex embodiment policies
+- Community actively contributes and shares body templates
+- Production deployments have comprehensive monitoring and observability
 
-### Technical Success Metrics
-- ✅ Protocol extends cleanly without breaking changes
-- ✅ Broker handles concurrent agents with MCP tools
-- ✅ Tool discovery responds quickly with pattern matching
-- ✅ MCP tool calls complete end-to-end successfully
-- ✅ Memory usage scales appropriately with registered tools
-
-### User Experience Success
-- ✅ Developer can add MCP federation to existing agent easily
-- ✅ Tool discovery works without configuration
-- ✅ Error messages are clear and actionable
-- ✅ Examples run successfully on first try
-
-## Next Steps
-
-With the core MCP federation system complete, the following advanced features are ready for implementation:
-
-### Phase J: Advanced Federation Features (Future)
-- **Cross-Broker Federation**: Connect multiple FEM brokers for larger networks
-- **Load Balancing**: Distribute tool calls across multiple providers
-- **Semantic Tool Discovery**: AI-powered tool matching beyond pattern matching
-- **Performance Optimization**: Connection pooling, response caching, metrics
-
-### Phase K: Production Readiness (Future)  
-- **Security Hardening**: Rate limiting, input validation, audit logging
-- **Monitoring & Observability**: Metrics, tracing, health checks
-- **Configuration Management**: Environment-specific settings, feature flags
-- **High Availability**: Clustering, failover, backup/recovery
-
-The phased approach successfully delivered a complete MCP federation system that enables seamless tool sharing across agents while maintaining the FEP protocol's security and reliability principles.
+The phased approach ensures steady progress toward the vision of ubiquitous, secure hosted embodiment while maintaining the FEM Protocol's core principles of security, usability, and distributed intelligence.

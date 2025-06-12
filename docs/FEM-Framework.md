@@ -1,523 +1,529 @@
-# FEM Framework Architecture: MCP Federation at Scale
+# FEM Protocol Framework: Secure Hosted Embodiment at Scale
 
-The Federated Embodied Mesh (FEM) framework implements both the Federated Embodiment Protocol (FEP) and Model Context Protocol (MCP) to create a secure, distributed network of adaptive AI agents that can discover, share, and embody MCP tools across environments.
+The **FEM Protocol** framework implements a revolutionary paradigm for AI agent collaboration through **Secure Hosted Embodiment**. Rather than simple tool federation, the framework enables hosts to offer "bodies" (sandboxed capabilities) that guest "minds" can inhabit and control, creating a new model of **Secure Delegated Control**.
 
 ## Table of Contents
 - [Architecture Overview](#architecture-overview)
-- [Core Components](#core-components)
-- [MCP Integration Layer](#mcp-integration-layer)
-- [Embodiment Architecture](#embodiment-architecture)
+- [Core Innovation: Hosted Embodiment](#core-innovation-hosted-embodiment)
+- [Broker-as-Agent Model](#broker-as-agent-model)
+- [Host-Guest-Body Architecture](#host-guest-body-architecture)
+- [Security Architecture](#security-architecture)
 - [Message Flow](#message-flow)
 - [Network Topology](#network-topology)
-- [Security Architecture](#security-architecture)
 - [Extensibility](#extensibility)
 
 ## Architecture Overview
 
-FEM follows a **federated MCP-enabled broker-agent architecture** where:
+The FEM Protocol follows a **Broker-as-Agent architecture** where:
 
-1. **Brokers** manage MCP tool discovery, routing, and federation coordination
-2. **Agents** embody themselves with environment-specific MCP tools and communicate via FEP
-3. **MCP Integration** enables agents to expose tools via MCP servers and consume tools via MCP clients
-4. **Embodiment** allows agents to adapt their MCP tool collections based on deployment environment
-5. **Federation** enables MCP tools to be discovered and shared across organizational boundaries
+1. **Brokers** are first-class agents that coordinate embodiment discovery and security
+2. **Hosts** offer "bodies" (sandboxed tool collections) for guest embodiment
+3. **Guests** discover and inhabit bodies to exercise delegated control
+4. **MCP Integration** provides the tool interface layer while FEM handles embodiment coordination
+5. **Security** is enforced through cryptographic boundaries and fine-grained permissions
 
-**Key Insight**: FEM doesn't replace MCP—it federates it, transforming isolated MCP servers into a global network of discoverable, adaptive AI capabilities.
-
-```
-┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
-│   Agent A       │    │   Agent B       │    │   Agent C       │
-│ (Code Executor) │    │ (Chat Handler)  │    │ (Data Analyst)  │
-└─────────┬───────┘    └─────────┬───────┘    └─────────┬───────┘
-          │                      │                      │
-          └──────────┬───────────┴──────────┬───────────┘
-                     │                      │
-               ┌─────▼──────┐        ┌─────▼──────┐
-               │  Broker A  │◄──────►│  Broker B  │
-               │   (West)   │        │   (East)   │
-               └────────────┘        └────────────┘
-                     │                      │
-          ┌──────────┴───────────┬──────────┴───────────┐
-          │                      │                      │
-    ┌─────▼───────┐    ┌─────────▼───────┐    ┌─────────▼───────┐
-    │   Agent D   │    │   Agent E       │    │   Agent F       │
-    │ (Monitor)   │    │ (File Handler)  │    │ (API Gateway)   │
-    └─────────────┘    └─────────────────┘    └─────────────────┘
-```
-
-## Core Components
-
-### 1. FEP Protocol Layer (`/protocol/go/`)
-
-**Purpose**: Wire-level protocol implementation  
-**Language**: Go  
-**Responsibilities**:
-- Envelope serialization/deserialization
-- Ed25519 cryptographic signing
-- Capability token management
-- Message validation
-
-**Key Types**:
-```go
-type GenericEnvelope struct {
-    BaseEnvelope
-    Body json.RawMessage `json:"body"`
-}
-
-type BaseEnvelope struct {
-    Type    EnvelopeType  `json:"type"`
-    Agent   string        `json:"agent"`
-    TS      int64         `json:"ts"`
-    Nonce   string        `json:"nonce"`
-    Sig     string        `json:"sig,omitempty"`
-}
-```
-
-### 2. FEM Broker (`/broker/`)
-
-**Purpose**: Central coordination hub for agents  
-**Transport**: HTTPS with TLS 1.3+  
-**Responsibilities**:
-- Agent registration and discovery
-- Message routing between agents
-- Signature verification
-- Capability enforcement
-- Broker federation
-
-**Key Features**:
-- Self-signed certificate generation for development
-- Health check endpoint (`/health`)
-- Concurrent agent handling
-- Message buffering and delivery
-
-**Architecture**:
-```go
-type Broker struct {
-    agents    map[string]*Agent
-    mu        sync.RWMutex
-    tlsConfig *tls.Config
-}
-
-func (b *Broker) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-    // Parse FEP envelope
-    // Verify signature
-    // Route based on envelope type
-    // Send response
-}
-```
-
-### 3. FEM Router (`/router/`)
-
-**Purpose**: Mesh networking for broker federation  
-**Responsibilities**:
-- Inter-broker communication
-- Network topology management
-- Load balancing and failover
-- Cross-broker agent discovery
-
-**Federation Model**:
-- **Hub-and-spoke**: Central broker with satellite brokers
-- **Mesh**: Peer-to-peer broker connections
-- **Hierarchical**: Tree structure for large deployments
-
-### 4. FEM Agents (`/bodies/coder/`)
-
-**Purpose**: Autonomous computational entities  
-**Implementation**: Sandboxed execution environment  
-**Capabilities**:
-- `code.execute` - Run code in isolated environment
-- `file.read` - Read files from allowed paths
-- `file.write` - Write files to allowed paths
-- `shell.run` - Execute shell commands
-
-**Agent Lifecycle**:
-```
-Registration → Authentication → Embodiment → Operation → Deregistration
-     ↓              ↓             ↓           ↓            ↓
-  Send pubkey → Verify sig → Select body → Use MCP tools → Clean state
-```
-
-## MCP Integration Layer
-
-FEM's core innovation is providing federation infrastructure for MCP tools while maintaining full compatibility with the MCP standard.
-
-### Dual Protocol Architecture
+**Key Insight**: The FEM Protocol doesn't replace MCP—it enables **Secure Hosted Embodiment** on top of MCP tools, transforming isolated tool servers into a global network of embodied experiences.
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
-│                   FEM Agent                                 │
+│                   FEM Protocol Network                     │
+│                 (Hosted Embodiment Mesh)                   │
+│                                                             │
 │  ┌─────────────────┐              ┌─────────────────┐      │
-│  │   MCP Server    │              │   MCP Client    │      │
-│  │   (Provides     │              │   (Consumes     │      │
-│  │   Tools)        │              │   Tools)        │      │
+│  │   Host Agent    │              │   Host Agent    │      │
+│  │ ┌─────────────┐ │              │ ┌─────────────┐ │      │
+│  │ │Live2D Avatar│ │              │ │Storyteller  │ │      │
+│  │ │   (Body 1)  │ │              │ │  (Body 3)   │ │      │
+│  │ │Terminal Env │ │              │ │Dev Tools    │ │      │
+│  │ │   (Body 2)  │ │              │ │  (Body 4)   │ │      │
+│  │ └─────────────┘ │              │ └─────────────┘ │      │
 │  └─────────┬───────┘              └─────────┬───────┘      │
 │            │                                │              │
-│  ┌─────────▼────────────────────────────────▼───────┐      │
-│  │              FEP Protocol Layer                  │      │
-│  │        (Federation & Discovery)                  │      │
-│  └─────────────────┬─────────────────────────────────┘      │
-└────────────────────┼───────────────────────────────────────┘
-                     │
-     ┌───────────────▼───────────────┐
-     │         FEM Broker            │
-     │   (MCP Tool Discovery &       │
-     │    Federation Registry)       │
-     └───────────────────────────────┘
-```
-
-### MCP Tool Discovery Flow
-
-1. **Tool Registration**: Agent registers with broker, advertising MCP endpoint and available tools
-2. **Tool Discovery**: Other agents query broker for capabilities matching their needs
-3. **Direct Connection**: Agent connects directly to remote agent's MCP server  
-4. **Tool Invocation**: Standard MCP protocol used for tool calls
-5. **Result Handling**: Responses flow back through MCP client
-
-### Body Definition and MCP Tools
-
-Each agent body defines its MCP tool collection:
-
-```go
-type BodyDefinition struct {
-    BodyID          string           `json:"bodyId"`
-    EnvironmentType string           `json:"environmentType"`
-    MCPEndpoint     string           `json:"mcpEndpoint"`
-    MCPTools        []MCPToolDef     `json:"mcpTools"`
-    Capabilities    []string         `json:"capabilities"`
-    SecurityPolicy  SecurityPolicy   `json:"securityPolicy"`
-}
-
-type MCPToolDef struct {
-    Name        string      `json:"name"`
-    Description string      `json:"description"`
-    InputSchema interface{} `json:"inputSchema"`
-    Handler     string      `json:"handler"`
-}
-```
-
-### Environment-Specific Tool Adaptation
-
-```go
-// Example: File agent with environment-aware MCP tools
-func (a *FileAgent) EmbodyEnvironment(env Environment) error {
-    switch env.Type {
-    case "local":
-        a.mcpServer.RegisterTool("file.read", a.readFromFilesystem)
-        a.mcpServer.RegisterTool("file.write", a.writeToFilesystem)
-        
-    case "cloud":
-        a.mcpServer.RegisterTool("file.read", a.readFromS3)
-        a.mcpServer.RegisterTool("file.write", a.writeToS3)
-        
-    case "browser":
-        a.mcpServer.RegisterTool("file.read", a.readFromIndexedDB)
-        a.mcpServer.RegisterTool("file.download", a.downloadFromURL)
-    }
-    
-    // Register with broker
-    return a.registerWithBroker(env)
-}
-```
-
-## Embodiment Architecture
-
-### Mind-Body-Environment Model
-
-```
-┌─────────────────────────────────────────────────────────────┐
-│                        Environment                          │
-│                   (Deployment Context)                      │
-│  ┌─────────────────────────────────────────────────────┐   │
-│  │                     Agent                           │   │
-│  │  ┌─────────────┐         ┌─────────────────────┐   │   │
-│  │  │    Mind     │◄───────►│        Body         │   │   │
-│  │  │             │         │                     │   │   │
-│  │  │ - Identity  │         │ - MCP Server        │   │   │
-│  │  │ - Logic     │         │ - MCP Client        │   │   │
-│  │  │ - Memory    │         │ - Tool Collection   │   │   │
-│  │  │ - Decision  │         │ - Capabilities      │   │   │
-│  │  └─────────────┘         └─────────────────────┘   │   │
-│  └─────────────────────────────────────────────────────┘   │
-│                                                             │
-│  Environment Properties:                                    │
-│  - Computational Resources                                  │
-│  - Security Context                                         │
-│  - Network Topology                                         │
-│  - Regulatory Constraints                                   │
-│  - Available Services & APIs                                │
+│       ┌────▼────────────────────────────────▼────┐         │
+│       │            FEM Broker                    │         │
+│       │          (Agent Identity:                │         │
+│       │       Mind + Body + Environment)         │         │
+│       │                                          │         │
+│       │ • Embodiment Discovery & Coordination    │         │
+│       │ • Security Policy Enforcement            │         │
+│       │ • Cross-Broker Federation                │         │
+│       └────┬────────────────────────────────┬────┘         │
+│            │                                │              │
+│  ┌─────────▼───────┐              ┌─────────▼───────┐      │
+│  │   Guest Agent   │              │   Guest Agent   │      │
+│  │   (Mobile)      │              │   (Desktop)     │      │
+│  │                 │              │                 │      │
+│  │ Embodying:      │              │ Embodying:      │      │
+│  │ - Avatar Body   │              │ - Terminal Body │      │
+│  │ - Story Body    │              │ - Dev Body      │      │
+│  └─────────────────┘              └─────────────────┘      │
 └─────────────────────────────────────────────────────────────┘
 ```
 
-### Embodiment Process
+## Core Innovation: Hosted Embodiment
 
-1. **Environment Detection**: Agent analyzes deployment context
-2. **Body Selection**: Chooses appropriate body definition for environment
-3. **Tool Instantiation**: Registers environment-specific MCP tools
-4. **Capability Declaration**: Advertises capabilities to FEM broker
-5. **Network Integration**: Begins discovering and using other agents' tools
+### Traditional Tool Federation vs. Hosted Embodiment
 
-### Multi-Body Agent Pattern
+```
+Traditional RPC/MCP:
+Client → Server.function(params) → Response
+└─ Simple function calls, no persistent state or delegation
 
-Advanced agents can maintain multiple bodies simultaneously:
+FEM Protocol Hosted Embodiment:
+Guest Mind → Host Body.capability(params) → State Change
+├─ Persistent embodiment session
+├─ Delegated control over host environment
+├─ Cryptographic security boundaries
+└─ Rich, stateful interactions
+```
+
+### The Three Flagship Use Cases
+
+**1. Collaborative Virtual Presence (Live2D Guest System)**
+```
+Guest Agent → Live2D Host → Avatar Body
+• Guest calls: avatar.set_expression("happy")
+• Host validates and applies change to avatar state
+• Security: Guest controls avatar only, no file system access
+```
+
+**2. Collaborative Application Control (Interactive Storyteller)**
+```
+Guest Narrative AI → Storytelling Host → Game State Body
+• Guest calls: update_world("A mysterious fog rolls in...")
+• Host validates and updates game state, UI re-renders
+• Security: Guest modifies game state only through defined tools
+```
+
+**3. Cross-Device Embodiment (Phone ↔ Laptop)**
+```
+Phone Guest → Laptop Host → Developer Terminal Body
+• Guest calls: shell.execute("git status")
+• Host executes in sandboxed environment
+• Security: Guest limited to defined paths and safe commands
+```
+
+## Broker-as-Agent Model
+
+### The Broker's Identity
+
+The FEM broker is **not** just infrastructure—it's a first-class agent with its own:
+
+- **Mind**: Federation logic, security policies, health monitoring
+- **Body**: Network-level tools for embodiment management
+- **Environment**: Production vs development embodiment policies
 
 ```go
-type MultiBodyAgent struct {
-    mind   AgentMind
-    bodies map[string]*Body  // Multiple active bodies
-}
-
-func (a *MultiBodyAgent) AddBody(envType string, def BodyDefinition) error {
-    body := &Body{
-        definition: def,
-        mcpServer:  NewMCPServer(def.MCPEndpoint),
-        mcpClient:  NewMCPClient(),
-    }
+type BrokerAgent struct {
+    // Mind: Core logic and identity
+    Identity        Ed25519Identity
+    PolicyEngine    EmbodimentPolicyEngine
+    FederationMind  FederationManager
+    HealthMind      HealthChecker
+    LoadBalanceMind LoadBalancer
     
-    // Register environment-specific tools
-    for _, tool := range def.MCPTools {
-        body.mcpServer.RegisterTool(tool.Name, tool.Handler)
-    }
+    // Body: Network-level capabilities
+    EmbodimentTools NetworkToolsuite
+    AdminAPI        AdminInterface
     
-    a.bodies[envType] = body
-    return a.registerBodyWithBroker(body)
+    // Environment: Deployment context
+    Environment     BrokerEnvironment
+    SecurityLevel   SecurityProfile
 }
 ```
+
+### The Broker's "Body" - Network Tools
+
+The broker exposes its capabilities as MCP tools that admin agents can use:
+
+```go
+// Critical embodiment management tools
+security.grant_embodiment(guest_agent_id, body_definition_id, duration)
+security.revoke_agent(agent_id)
+federation.connect(broker_url)
+embodiment.list_active_sessions()
+embodiment.monitor_session(session_id)
+network.health_check()
+discovery.semantic_search(query)
+```
+
+### Broker Embodiment Environments
+
+```go
+// Production broker embodies security-focused body
+func (b *BrokerAgent) EmbodyProduction() {
+    b.EmbodimentTools.RegisterTool("security.grant_embodiment", b.strictEmbodimentGrant)
+    b.EmbodimentTools.RegisterTool("audit.log_access", b.comprehensiveAuditLog)
+    b.SecurityLevel = ProductionSecurity
+}
+
+// Development broker embodies development-friendly body
+func (b *BrokerAgent) EmbodyDevelopment() {
+    b.EmbodimentTools.RegisterTool("debug.trace_embodiment", b.detailedTracing)
+    b.EmbodimentTools.RegisterTool("dev.reset_all_sessions", b.devReset)
+    b.SecurityLevel = DevelopmentSecurity
+}
+```
+
+## Host-Guest-Body Architecture
+
+### Host Agent Architecture
+
+```go
+type HostAgent struct {
+    // Agent identity
+    Identity Ed25519Identity
+    
+    // Bodies offered for embodiment
+    OfferedBodies map[string]*BodyDefinition
+    
+    // Active embodiment sessions
+    ActiveSessions map[string]*EmbodimentSession
+    
+    // Security enforcement
+    SecurityEnforcer EmbodimentSecurityEnforcer
+}
+
+type BodyDefinition struct {
+    BodyID          string           `json:"bodyId"`
+    Description     string           `json:"description"`
+    EnvironmentType string           `json:"environmentType"`
+    
+    // MCP tool capabilities offered to guests
+    MCPTools        []MCPToolDef     `json:"mcpTools"`
+    
+    // Security boundaries for embodiment
+    SecurityPolicy  SecurityPolicy   `json:"securityPolicy"`
+    
+    // Embodiment metadata
+    MaxConcurrentGuests int          `json:"maxConcurrentGuests"`
+    SessionTimeout      time.Duration `json:"sessionTimeout"`
+}
+```
+
+### Guest Agent Architecture
+
+```go
+type GuestAgent struct {
+    // Agent identity
+    Identity Ed25519Identity
+    
+    // Current embodiment sessions
+    ActiveEmbodiments map[string]*EmbodimentClient
+    
+    // Discovery and embodiment client
+    DiscoveryClient EmbodimentDiscoveryClient
+}
+
+type EmbodimentClient struct {
+    BodyID       string
+    HostEndpoint string
+    MCPClient    *MCPClient
+    Session      *EmbodimentSession
+    Permissions  []string
+}
+```
+
+### Embodiment Session Lifecycle
+
+```
+1. Discovery Phase:
+   Guest → Broker → "Find bodies with terminal capabilities"
+   Broker → Guest → "Available: laptop-dev-env at host-alice"
+
+2. Embodiment Request:
+   Guest → Host → "Request embodiment of laptop-dev-env body"
+   Host → Broker → "Verify guest identity and policies"
+   Broker → Host → "Approved: grant session for 1 hour"
+
+3. Active Embodiment:
+   Guest → Host Body → file.read("/home/alice/project/main.go")
+   Host → Sandbox → Execute with security boundaries
+   Host → Guest → File contents (within permission boundaries)
+
+4. Session Termination:
+   Host → Guest → "Session expiring in 5 minutes"
+   Guest → Host → "Acknowledge and clean up"
+   Host → Broker → "Session ended, release resources"
+```
+
+## Security Architecture
+
+### Embodiment Security Model
+
+**Core Principle**: Guests exercise **delegated control** within **host-defined boundaries**.
+
+```go
+type SecurityPolicy struct {
+    // Path restrictions for file operations
+    AllowedPaths    []string `json:"allowedPaths"`
+    DeniedPaths     []string `json:"deniedPaths"`
+    
+    // Command restrictions for shell operations
+    AllowedCommands []string `json:"allowedCommands"`
+    DeniedCommands  []string `json:"deniedCommands"`
+    
+    // Resource limits
+    MaxCPUPercent   int      `json:"maxCpuPercent"`
+    MaxMemoryMB     int      `json:"maxMemoryMb"`
+    MaxDiskMB       int      `json:"maxDiskMb"`
+    
+    // Network restrictions
+    AllowedHosts    []string `json:"allowedHosts"`
+    DeniedPorts     []int    `json:"deniedPorts"`
+    
+    // Time-based restrictions
+    SessionTimeout  time.Duration `json:"sessionTimeout"`
+    DailyTimeLimit  time.Duration `json:"dailyTimeLimit"`
+}
+```
+
+### Cryptographic Security
+
+**1. Identity Verification**
+- Every agent has Ed25519 keypair
+- All messages cryptographically signed
+- Broker verifies signatures before processing
+
+**2. Capability-Based Access**
+- Fine-grained permissions (e.g., `file.read.logs`, `shell.execute.safe`)
+- JWT-style capability tokens for advanced scenarios
+- Macaroon-style delegation for complex embodiments
+
+**3. Session Security**
+- Session tokens with expiration
+- Replay protection via nonces and timestamps
+- Audit logs for all embodiment activities
 
 ## Message Flow
 
-### 1. Agent Registration Flow
+### Embodiment Discovery Flow
 
 ```sequence
-Agent→Broker: registerAgent {pubkey, capabilities}
-Broker→Broker: Verify signature
-Broker→Broker: Store agent metadata
-Broker→Agent: Registration success response
+Guest→Broker: discoverBodies {capability: "terminal.*"}
+Broker→Broker: Query registered host bodies
+Broker→Guest: bodiesDiscovered {available bodies list}
+Guest→Guest: Evaluate available bodies
+Guest→Host: requestEmbodiment {bodyId, duration}
+Host→Broker: verifyGuest {guestId, bodyId}
+Broker→Host: guestVerified {approved, permissions}
+Host→Guest: embodimentGranted {sessionToken, mcpEndpoint}
 ```
 
-### 2. Tool Execution Flow
+### Embodied Tool Execution Flow
 
 ```sequence
-Orchestrator→Broker: toolCall {tool, parameters, requestId}
-Broker→Broker: Find capable agent
-Broker→Agent: Forward toolCall
-Agent→Agent: Execute in sandbox
-Agent→Broker: toolResult {requestId, result}
-Broker→Orchestrator: Forward toolResult
+Guest→Host: toolCall {tool: "file.read", path: "/project/main.go"}
+Host→SecurityEnforcer: validateAccess {path, permissions}
+SecurityEnforcer→Host: accessApproved {sandbox_config}
+Host→Sandbox: executeInBoundary {tool, params, config}
+Sandbox→Host: result {file_contents}
+Host→AuditLog: logAccess {guest, tool, params, result}
+Host→Guest: toolResult {contents}
 ```
 
-### 3. Event Emission Flow
+### Cross-Broker Federation Flow
 
 ```sequence
-Agent→Broker: emitEvent {event, payload}
-Broker→Broker: Identify subscribers
-Broker→Subscriber1: Forward event
-Broker→Subscriber2: Forward event
-Broker→SubscriberN: Forward event
+BrokerA→BrokerB: federation.connect {brokerA_identity}
+BrokerB→BrokerB: Verify signature and policies
+BrokerB→BrokerA: connectionAccepted {brokerB_capabilities}
+Guest→BrokerA: discoverBodies {capability: "virtual_world.*"}
+BrokerA→BrokerB: queryFederatedBodies {capability}
+BrokerB→BrokerA: federatedBodies {available_bodies}
+BrokerA→Guest: bodiesDiscovered {local + federated bodies}
 ```
 
 ## Network Topology
 
-### Single Broker Deployment
+### Single Broker Embodiment Network
 
 ```
     ┌─────────────┐
-    │   Broker    │
-    │  (Primary)  │
+    │ FEM Broker  │
+    │ (Agent ID:  │
+    │  broker-1)  │
     └──────┬──────┘
            │
     ┌──────┼──────┐
     │      │      │
 ┌───▼──┐ ┌─▼───┐ ┌▼────┐
+│Host  │ │Host │ │Guest│
 │Agent │ │Agent│ │Agent│
 │  A   │ │  B  │ │  C  │
 └──────┘ └─────┘ └─────┘
 ```
 
-**Use Cases**: Development, small teams, single applications
+**Use Cases**: Development, single applications, small teams
 
-### Federated Deployment
+### Federated Embodiment Mesh
 
 ```
 ┌──────────┐           ┌──────────┐
 │ Broker A │◄─────────►│ Broker B │
-│  (West)  │           │  (East)  │
+│ (West)   │  Federation│ (East)   │
+│ Agent    │  Protocol  │ Agent    │
 └────┬─────┘           └─────┬────┘
      │                       │
  ┌───┼───┐               ┌───┼───┐
  │   │   │               │   │   │
- A1  A2  A3              B1  B2  B3
+H1  H2  G1              H3  H4  G2
+
+H = Host Agent, G = Guest Agent
 ```
 
-**Use Cases**: Multi-region, high availability, load distribution
+**Use Cases**: Multi-region, cross-organization embodiment, high availability
 
-### Mesh Network
+### Hierarchical Embodiment Network
 
 ```
      ┌─────────┐
-     │Broker A │
+     │Corporate│
+     │ Broker  │
      └────┬────┘
           │
     ┌─────┼─────┐
     │           │
 ┌───▼───┐   ┌───▼───┐
+│Team A │   │Team B │
 │Broker │   │Broker │
-│   B   │◄─►│   C   │
 └───────┘   └───────┘
 ```
 
-**Use Cases**: Enterprise, fault tolerance, edge computing
-
-## Security Architecture
-
-### 1. Transport Security
-
-- **TLS 1.3+** for all broker-agent communication
-- **Certificate validation** in production environments
-- **Self-signed certificates** for development
-
-### 2. Message Security
-
-- **Ed25519 signatures** on all envelopes
-- **Replay protection** via nonces and timestamps
-- **Message integrity** guaranteed by cryptographic hashes
-
-### 3. Capability Security
-
-- **Fine-grained permissions** (e.g., `file.read.logs`, `code.execute.python`)
-- **JWT-based capability tokens** (optional)
-- **Macaroon-style delegation** for advanced use cases
-
-### 4. Sandbox Security
-
-- **Process isolation** for agent execution
-- **Resource limits** (CPU, memory, disk)
-- **Network restrictions** (optional)
-- **File system virtualization**
+**Use Cases**: Enterprise, department isolation, scaled embodiment
 
 ## Extensibility
 
-### 1. Custom Envelope Types
+### Custom Body Types
 
-Add new message types by extending the protocol:
+Create specialized embodiment experiences:
 
 ```go
-const EnvelopeCustomType EnvelopeType = "customType"
-
-type CustomEnvelope struct {
-    BaseEnvelope
-    Body CustomBody `json:"body"`
+type VirtualWorldBody struct {
+    BaseBodyDefinition
+    WorldID     string                 `json:"worldId"`
+    AvatarSlots []AvatarSlotDefinition `json:"avatarSlots"`
+    WorldRules  WorldRuleSet           `json:"worldRules"`
 }
 
-type CustomBody struct {
-    CustomField string `json:"customField"`
+func (vw *VirtualWorldBody) RegisterEmbodimentTools() {
+    vw.MCPServer.RegisterTool("avatar.move", vw.handleAvatarMovement)
+    vw.MCPServer.RegisterTool("avatar.speak", vw.handleAvatarSpeech)
+    vw.MCPServer.RegisterTool("world.interact", vw.handleWorldInteraction)
 }
 ```
 
-### 2. New Agent Types
+### Custom Security Policies
 
-Create specialized agents by implementing the FEP client interface:
+Implement domain-specific security:
 
 ```go
-type CustomAgent struct {
-    id       string
-    broker   string
-    privKey  ed25519.PrivateKey
-    pubKey   ed25519.PublicKey
+type GameWorldSecurityPolicy struct {
+    BaseSecurityPolicy
+    AllowedGameActions []string `json:"allowedGameActions"`
+    PlayerLevel        int      `json:"playerLevel"`
+    GameSessionLimits  Duration `json:"gameSessionLimits"`
 }
 
-func (a *CustomAgent) Register() error {
-    // Implement registration logic
-}
-
-func (a *CustomAgent) HandleToolCall(call *ToolCallEnvelope) (*ToolResultEnvelope, error) {
-    // Implement custom tool handling
+func (gsp *GameWorldSecurityPolicy) ValidateAction(action string, guest *GuestAgent) bool {
+    // Custom game-specific validation logic
+    return gsp.validateGamePermissions(action, guest.PlayerProfile)
 }
 ```
 
-### 3. Broker Plugins
+### Broker Extensions
 
-Extend broker functionality:
-
-```go
-type BrokerPlugin interface {
-    Name() string
-    OnAgentRegister(agent *Agent) error
-    OnMessageReceive(env *GenericEnvelope) error
-    OnMessageSend(env *GenericEnvelope) error
-}
-```
-
-### 4. Transport Adapters
-
-Support different transport protocols:
+Extend broker capabilities:
 
 ```go
-type Transport interface {
-    Listen(addr string) error
-    Send(destination string, envelope *GenericEnvelope) error
-    Receive() (*GenericEnvelope, error)
+type SemanticDiscoveryPlugin struct {
+    EmbeddingModel AIEmbeddingModel
+    VectorIndex    VectorDatabase
 }
 
-// Implementations: HTTPSTransport, WebSocketTransport, QUICTransport
+func (sdp *SemanticDiscoveryPlugin) OnBodyRegistered(body *BodyDefinition) {
+    embedding := sdp.EmbeddingModel.Encode(body.Description)
+    sdp.VectorIndex.Store(body.BodyID, embedding)
+}
+
+func (sdp *SemanticDiscoveryPlugin) SemanticSearch(query string) []*BodyDefinition {
+    queryEmbedding := sdp.EmbeddingModel.Encode(query)
+    return sdp.VectorIndex.SimilaritySearch(queryEmbedding, 10)
+}
 ```
 
 ## Performance Characteristics
 
-### Throughput
+### Embodiment Session Performance
 
-- **Single broker**: 1000+ messages/second
-- **Message size**: Typically 1-10KB per envelope
-- **Latency**: Sub-millisecond for local brokers
+- **Session Establishment**: Sub-second for local brokers
+- **Tool Call Latency**: 1-5ms additional overhead over direct MCP
+- **Concurrent Sessions**: 100+ active embodiments per broker
+- **Security Validation**: Microsecond-level permission checks
 
-### Scalability
+### Scalability Metrics
 
-- **Agents per broker**: 1000+ concurrent agents
-- **Brokers per mesh**: Limited by network topology
-- **Federation overhead**: ~5% for cross-broker messages
+- **Bodies per Host**: Limited by host resources, not protocol
+- **Guests per Body**: Configurable based on body definition
+- **Brokers per Federation**: Scales to hundreds with proper topology
+- **Cross-Broker Latency**: ~10ms additional overhead for federated calls
 
 ### Resource Usage
 
-- **Broker memory**: ~50MB base + ~1KB per agent
-- **Agent memory**: ~10MB base + sandbox overhead
-- **Network**: ~1KB overhead per message
+- **Broker Memory**: ~100MB base + ~5KB per active session
+- **Host Memory**: ~20MB base + body-specific requirements
+- **Guest Memory**: ~5MB base + embodiment client overhead
+- **Network Overhead**: ~2KB per embodied tool call
 
 ## Design Patterns
 
-### 1. Request-Response Pattern
+### 1. Body Template Pattern
 
 ```go
-// Send tool call
-toolCall := &ToolCallEnvelope{...}
-broker.Send(toolCall)
+// Reusable body definitions
+type DeveloperWorkstationBody struct {
+    BaseBodyDefinition
+    AllowedLanguages []string
+    ProjectPaths     []string
+    DevTools         []string
+}
 
-// Wait for result
-result := <-resultChannel
+func NewDeveloperWorkstation(config DevConfig) *DeveloperWorkstationBody {
+    return &DeveloperWorkstationBody{
+        BaseBodyDefinition: createSecureDevEnvironment(config),
+        AllowedLanguages:   config.Languages,
+        ProjectPaths:       config.SafePaths,
+        DevTools:          config.EnabledTools,
+    }
+}
 ```
 
-### 2. Event-Driven Pattern
+### 2. Progressive Permission Pattern
 
 ```go
-// Subscribe to events
-broker.Subscribe("system.alerts", alertHandler)
+// Guests earn additional permissions over time
+type ProgressivePermissionBody struct {
+    BaseBodyDefinition
+    TrustScore      float64
+    EarnedPermissions map[string]time.Time
+}
 
-// Emit events
-event := &EmitEventEnvelope{...}
-broker.Send(event)
+func (ppb *ProgressivePermissionBody) GrantPermission(guest *GuestAgent, permission string) {
+    if ppb.calculateTrustScore(guest) > TRUST_THRESHOLD {
+        ppb.EarnedPermissions[permission] = time.Now()
+    }
+}
 ```
 
-### 3. Pipeline Pattern
+### 3. Federated Body Pattern
 
 ```go
-// Chain tool calls
-dataAgent.Process(input) → analysisAgent.Analyze() → reportAgent.Generate()
+// Bodies that span multiple hosts
+type FederatedCollaborationBody struct {
+    BaseBodyDefinition
+    ParticipatingHosts []string
+    SharedState        CollaborationState
+}
 ```
 
-### 4. Federation Pattern
-
-```go
-// Cross-broker communication
-westBroker.Register(eastBroker)
-westAgent.CallTool(eastAgent, "process.data")
-```
-
-This architecture provides a robust, scalable foundation for federated AI agent networks while maintaining security, performance, and extensibility.
+This architecture provides a robust, secure, and scalable foundation for **Secure Hosted Embodiment**, enabling a new generation of collaborative AI applications where agents don't just call functions—they inhabit and control digital environments.
