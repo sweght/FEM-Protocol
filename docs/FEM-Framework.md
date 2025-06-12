@@ -1,6 +1,6 @@
 # FEM Protocol Framework: Secure Hosted Embodiment at Scale
 
-The **FEM Protocol** framework implements a revolutionary paradigm for AI agent collaboration through **Secure Hosted Embodiment**. Rather than simple tool federation, the framework enables hosts to offer "bodies" (sandboxed capabilities) that guest "minds" can inhabit and control, creating a new model of **Secure Delegated Control**.
+The **FEM Protocol** framework implements a new paradigm for AI agent collaboration through **Secure Hosted Embodiment**. Rather than simple tool federation, the framework enables hosts to offer "bodies" (sandboxed capabilities) that guest "minds" can inhabit and control, creating a model of **Secure Delegated Control**.
 
 ## Table of Contents
 - [Architecture Overview](#architecture-overview)

@@ -9,7 +9,7 @@
 
 ## 🎯 What is the FEM Protocol?
 
-The **FEM Protocol** enables **Secure Hosted Embodiment**, a revolutionary approach where a host environment can securely offer a "body"—a sandboxed set of capabilities—for a guest agent's "mind" to inhabit and control.
+The **FEM Protocol** enables **Secure Hosted Embodiment**, a new approach where a host environment can securely offer a "body"—a sandboxed set of capabilities—for a guest agent's "mind" to inhabit and control.
 
 This moves beyond simple tool federation to a model of **Secure Delegated Control**, unlocking powerful new applications:
 
@@ -161,7 +161,7 @@ make gen-certs
 
 ### Secure Delegated Control
 
-The FEM Protocol's revolutionary security model:
+The FEM Protocol's security model:
 
 ```
 Traditional RPC: Client → Server (Direct function calls)

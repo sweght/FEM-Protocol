@@ -14,7 +14,7 @@
 
 ## Overview
 
-The **FEM Protocol** is a wire-level protocol designed for **Secure Hosted Embodiment** between AI agents in a federated network. The protocol enables a revolutionary paradigm where guest "minds" can securely inhabit "bodies" offered by host environments, creating a model of **Secure Delegated Control**.
+The **FEM Protocol** is a wire-level protocol designed for **Secure Hosted Embodiment** between AI agents in a federated network. The protocol enables a new paradigm where guest "minds" can securely inhabit "bodies" offered by host environments, creating a model of **Secure Delegated Control**.
 
 **Core Innovation**: FEM Protocol moves beyond simple tool federation to enable persistent embodiment sessions where guests exercise delegated control over host-defined capabilities within cryptographically enforced security boundaries.
 
